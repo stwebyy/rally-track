@@ -40,6 +40,13 @@ export default function Home() {
     router.push('/signin');
   };
 
+  const handleRefreshUser = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    setLoading(false);
+  };
+
   if (loading) {
     return (
       <Box
@@ -87,14 +94,43 @@ export default function Home() {
           </Typography>
         </CardContent>
         <CardActions>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSignOut}
-            fullWidth
-          >
-            サインアウト
-          </Button>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => router.push('/auth/change-email')}
+                sx={{ flex: 1 }}
+              >
+                メール変更
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => router.push('/auth/update-password')}
+                sx={{ flex: 1 }}
+              >
+                パスワード更新
+              </Button>
+            </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleRefreshUser}
+              disabled={loading}
+              fullWidth
+            >
+              {loading ? '更新中...' : 'ユーザー情報を更新'}
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSignOut}
+              fullWidth
+            >
+              サインアウト
+            </Button>
+          </Box>
         </CardActions>
       </Card>
     </Box>

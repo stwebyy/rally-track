@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   // パブリックルート（認証不要）
-  const publicRoutes = ['/signin', '/signup', '/reset-password']
+  const publicRoutes = ['/signin', '/signup', '/reset-password', '/auth/confirm']
 
   // 現在のパスを取得
   const { pathname } = request.nextUrl

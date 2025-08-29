@@ -17,7 +17,7 @@ import MuiCard from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { styled, ThemeProvider, createTheme } from '@mui/material/styles';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 // Create a theme that matches Material-UI's sign-in template
 const theme = createTheme({
@@ -105,6 +105,7 @@ function SitemarkIcon() {
 
 export default function SignIn() {
   const router = useRouter();
+  const supabase = createClient();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);

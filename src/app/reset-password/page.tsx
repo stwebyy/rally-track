@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -15,7 +16,7 @@ import MuiCard from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { styled, ThemeProvider, createTheme } from '@mui/material/styles';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 // Create a theme that matches Material-UI's sign-in template
 const theme = createTheme({
@@ -102,16 +103,17 @@ function SitemarkIcon() {
 }
 
 export default function ResetPassword() {
+  const [loading, setLoading] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
+  const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = React.useState(false);
-  const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [authError, setAuthError] = React.useState('');
-  const [successMessage, setSuccessMessage] = React.useState('');
-  const [isValidSession, setIsValidSession] = React.useState(false);
+  const supabase = createClient();
 
   React.useEffect(() => {
     // Check if we have a valid session from the password reset link
@@ -144,7 +146,7 @@ export default function ResetPassword() {
     };
 
     checkSession();
-  }, [searchParams]);
+  }, [searchParams, supabase.auth]);
 
   const validateInputs = () => {
     const password = document.getElementById('password') as HTMLInputElement;

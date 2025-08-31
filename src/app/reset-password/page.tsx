@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -102,7 +102,7 @@ function SitemarkIcon() {
   );
 }
 
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -227,9 +227,124 @@ export default function ResetPassword() {
 
   if (!isValidSession && !authError) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline enableColorScheme />
-        <ResetPasswordContainer direction="column" justifyContent="center">
+      <Card variant="outlined">
+        <SitemarkIcon />
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
+        >
+          読み込み中...
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <CircularProgress />
+        </Box>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="outlined">
+      <SitemarkIcon />
+      <Typography
+        component="h1"
+        variant="h4"
+        sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)' }}
+      >
+        パスワードリセット
+      </Typography>
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        新しいパスワードを入力してください。
+      </Typography>
+      {authError && (
+        <Alert severity="error" sx={{ width: '100%' }}>
+          {authError}
+        </Alert>
+      )}
+      {successMessage && (
+        <Alert severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      )}
+      {isValidSession && (
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            gap: 2,
+          }}
+        >
+          <FormControl>
+            <FormLabel htmlFor="password">新しいパスワード</FormLabel>
+            <TextField
+              error={passwordError}
+              helperText={passwordErrorMessage}
+              name="password"
+              placeholder="••••••"
+              type="password"
+              id="password"
+              autoComplete="new-password"
+              autoFocus
+              required
+              fullWidth
+              variant="outlined"
+              color={passwordError ? 'error' : 'primary'}
+              disabled={loading}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel htmlFor="confirmPassword">パスワード確認</FormLabel>
+            <TextField
+              error={confirmPasswordError}
+              helperText={confirmPasswordErrorMessage}
+              name="confirmPassword"
+              placeholder="••••••"
+              type="password"
+              id="confirmPassword"
+              autoComplete="new-password"
+              required
+              fullWidth
+              variant="outlined"
+              color={confirmPasswordError ? 'error' : 'primary'}
+              disabled={loading}
+            />
+          </FormControl>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : undefined}
+          >
+            {loading ? 'パスワード更新中...' : 'パスワードを更新'}
+          </Button>
+        </Box>
+      )}
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Typography variant="body2">
+          <Link
+            href="/signin"
+            variant="body2"
+            sx={{ alignSelf: 'center', fontWeight: 'medium' }}
+          >
+            サインインページに戻る
+          </Link>
+        </Typography>
+      </Box>
+    </Card>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
+      <ResetPasswordContainer direction="column" justifyContent="space-between">
+        <Suspense fallback={
           <Card variant="outlined">
             <SitemarkIcon />
             <Typography
@@ -243,106 +358,9 @@ export default function ResetPassword() {
               <CircularProgress />
             </Box>
           </Card>
-        </ResetPasswordContainer>
-      </ThemeProvider>
-    );
-  }
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme />
-      <ResetPasswordContainer direction="column" justifyContent="space-between">
-        <Card variant="outlined">
-          <SitemarkIcon />
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)' }}
-          >
-            パスワードリセット
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            新しいパスワードを入力してください。
-          </Typography>
-          {authError && (
-            <Alert severity="error" sx={{ width: '100%' }}>
-              {authError}
-            </Alert>
-          )}
-          {successMessage && (
-            <Alert severity="success" sx={{ width: '100%' }}>
-              {successMessage}
-            </Alert>
-          )}
-          {isValidSession && (
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              noValidate
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
-                gap: 2,
-              }}
-            >
-              <FormControl>
-                <FormLabel htmlFor="password">新しいパスワード</FormLabel>
-                <TextField
-                  error={passwordError}
-                  helperText={passwordErrorMessage}
-                  name="password"
-                  placeholder="••••••"
-                  type="password"
-                  id="password"
-                  autoComplete="new-password"
-                  required
-                  fullWidth
-                  variant="outlined"
-                  color={passwordError ? 'error' : 'primary'}
-                  disabled={loading}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel htmlFor="confirmPassword">パスワード確認</FormLabel>
-                <TextField
-                  error={confirmPasswordError}
-                  helperText={confirmPasswordErrorMessage}
-                  name="confirmPassword"
-                  placeholder="••••••"
-                  type="password"
-                  id="confirmPassword"
-                  autoComplete="new-password"
-                  required
-                  fullWidth
-                  variant="outlined"
-                  color={confirmPasswordError ? 'error' : 'primary'}
-                  disabled={loading}
-                />
-              </FormControl>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : undefined}
-              >
-                {loading ? 'パスワード更新中...' : 'パスワードを更新'}
-              </Button>
-            </Box>
-          )}
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2">
-              <Link
-                href="/signin"
-                variant="body2"
-                sx={{ alignSelf: 'center', fontWeight: 'medium' }}
-              >
-                サインインページに戻る
-              </Link>
-            </Typography>
-          </Box>
-        </Card>
+        }>
+          <ResetPasswordContent />
+        </Suspense>
       </ResetPasswordContainer>
     </ThemeProvider>
   );

@@ -24,17 +24,17 @@ export default function PageLayout({
     isDesktop,
     isDesktopSidebarExpanded,
     isMobileSidebarOpen,
-    isHydrated,
     handleToggleDesktopSidebar,
     handleToggleMobileSidebar,
     handleCloseMobileSidebar,
   } = useSidebar();
 
-  // クライアントサイドでのHydration完了まで統一されたローディング状態を表示
-  if (!isHydrated || (loading && showLoading)) {
+  // 認証ローディング中の場合のみローディングスピナーを表示
+  if (loading && showLoading) {
     return <LoadingSpinner />;
   }
 
+  // 認証されていない場合は何も表示しない
   if (!user && showLoading) {
     return null;
   }

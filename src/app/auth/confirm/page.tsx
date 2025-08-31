@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -99,7 +100,7 @@ function SitemarkIcon() {
   );
 }
 
-export default function Confirm() {
+function ConfirmContent() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [success, setSuccess] = React.useState(false);
@@ -180,9 +181,88 @@ export default function Confirm() {
 
   if (loading) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline enableColorScheme />
-        <ConfirmContainer direction="column" justifyContent="center">
+      <Card variant="outlined">
+        <SitemarkIcon />
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
+        >
+          確認処理中...
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <CircularProgress />
+        </Box>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="outlined">
+      <SitemarkIcon />
+
+      {success ? (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <CheckCircleIcon sx={{ fontSize: 60, color: 'success.main' }} />
+          </Box>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
+          >
+            確認完了
+          </Typography>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {message}
+          </Alert>
+          <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+            3秒後に自動的にリダイレクトされます...
+          </Typography>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => router.push('/')}
+            sx={{ mt: 2 }}
+          >
+            今すぐホームに移動
+          </Button>
+        </>
+      ) : (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <ErrorIcon sx={{ fontSize: 60, color: 'error.main' }} />
+          </Box>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
+          >
+            確認エラー
+          </Typography>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => router.push('/signin')}
+            sx={{ mt: 2 }}
+          >
+            サインインページに戻る
+          </Button>
+        </>
+      )}
+    </Card>
+  );
+}
+
+export default function Confirm() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
+      <ConfirmContainer direction="column" justifyContent="center">
+        <Suspense fallback={
           <Card variant="outlined">
             <SitemarkIcon />
             <Typography
@@ -190,77 +270,15 @@ export default function Confirm() {
               variant="h4"
               sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
             >
-              確認処理中...
+              読み込み中...
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
               <CircularProgress />
             </Box>
           </Card>
-        </ConfirmContainer>
-      </ThemeProvider>
-    );
-  }
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme />
-      <ConfirmContainer direction="column" justifyContent="center">
-        <Card variant="outlined">
-          <SitemarkIcon />
-
-          {success ? (
-            <>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <CheckCircleIcon sx={{ fontSize: 60, color: 'success.main' }} />
-              </Box>
-              <Typography
-                component="h1"
-                variant="h4"
-                sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
-              >
-                確認完了
-              </Typography>
-              <Alert severity="success" sx={{ mb: 2 }}>
-                {message}
-              </Alert>
-              <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                3秒後に自動的にリダイレクトされます...
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={() => router.push('/')}
-                sx={{ mt: 2 }}
-              >
-                今すぐホームに移動
-              </Button>
-            </>
-          ) : (
-            <>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <ErrorIcon sx={{ fontSize: 60, color: 'error.main' }} />
-              </Box>
-              <Typography
-                component="h1"
-                variant="h4"
-                sx={{ width: '100%', fontSize: 'clamp(1.5rem, 8vw, 1.75rem)', textAlign: 'center' }}
-              >
-                確認エラー
-              </Typography>
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={() => router.push('/signin')}
-                sx={{ mt: 2 }}
-              >
-                サインインページに戻る
-              </Button>
-            </>
-          )}
-        </Card>
+        }>
+          <ConfirmContent />
+        </Suspense>
       </ConfirmContainer>
     </ThemeProvider>
   );

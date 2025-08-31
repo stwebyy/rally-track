@@ -22,7 +22,7 @@ export function useSidebar(): UseSidebarReturn {
   // SSR時はデフォルトでモバイルとしてレンダリング、Hydration後に正しい値を設定
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'), {
     defaultMatches: false, // SSRではfalseから開始
-    noSsr: false // SSRでも動作させる
+    noSsr: true // SSRを無効にしてクライアントサイドでのみ動作
   });
 
   const [isDesktopSidebarExpanded, setIsDesktopSidebarExpanded] = React.useState(false);

@@ -51,7 +51,8 @@ export default function Events() {
           *,
           match_results (*)
         `)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (eventsError) {
         throw eventsError;
@@ -237,7 +238,7 @@ export default function Events() {
                 paginationModel: { pageSize: 10 }
               },
               sorting: {
-                sortModel: sortModel,
+                sortModel: [{ field: 'date', sort: 'desc' }],
               },
             }}
             sortModel={sortModel}

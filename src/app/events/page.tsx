@@ -138,19 +138,18 @@ export default function Events() {
       {
         field: 'name',
         headerName: '試合名',
-        width: 250,
+        width: 150,
         minWidth: 150,
       },
       {
         field: 'location',
         headerName: '試合場所',
-        width: 150,
+        width: 120,
         minWidth: 100,
       },
       {
         field: 'actions',
         type: 'actions',
-        headerName: 'アクション',
         width: 120,
         sortable: false,
         filterable: false,

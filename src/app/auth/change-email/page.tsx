@@ -111,8 +111,6 @@ export default function ChangeEmail() {
   const [success, setSuccess] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = useState('');
-  const [debugInfo, setDebugInfo] = useState('');
-  const [showHelp, setShowHelp] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const router = useRouter();
   const supabase = createClient();
@@ -131,35 +129,7 @@ export default function ChangeEmail() {
     getUser();
   }, [router, supabase.auth]);
 
-  const handleDebugCheck = async () => {
-    try {
-      // 環境変数の確認
-      const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      const isDev = process.env.NODE_ENV === 'development' || projectUrl?.includes('localhost');
-
-      let debugMsg = '=== デバッグ情報 ===\n';
-      debugMsg += `Environment: ${isDev ? '開発環境' : '本番環境'}\n`;
-      debugMsg += `Project URL: ${projectUrl ? '設定済み' : '未設定'}\n`;
-      debugMsg += `Anon Key: ${anonKey ? '設定済み' : '未設定'}\n`;
-      debugMsg += `Current User: ${user?.email || 'なし'}\n`;
-      debugMsg += `User Confirmed: ${user?.email_confirmed_at ? 'はい' : 'いいえ'}\n`;
-
-      if (isDev) {
-        debugMsg += '\n💡 開発環境でのSupabase内蔵メール：\n';
-        debugMsg += '• 1時間あたりの送信制限があります\n';
-        debugMsg += '• 一時的な制限により失敗することがあります\n';
-        debugMsg += '• 数分待ってから再試行してください\n';
-        debugMsg += '• SMTP設定は不要です（内蔵メールを使用）';
-      }
-
-      setDebugInfo(debugMsg);
-      console.log('Debug info:', debugMsg);
-    } catch (error) {
-      console.error('Debug check error:', error);
-      setDebugInfo('デバッグ情報の取得に失敗しました');
-    }
-  };  const validateInputs = () => {
+  const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
     let isValid = true;
 
@@ -237,22 +207,7 @@ export default function ChangeEmail() {
         } else if (error.message.includes('invalid email') || error.message.includes('invalid_email')) {
           errorMessage = '無効なメールアドレス形式です。';
         } else if (error.message.includes('email change') || error.message.includes('sending email') || error.message.includes('unexpected_failure')) {
-          errorMessage = `❌ メール送信に失敗しました
-
-� Supabase内蔵メールでの解決策：
-1. しばらく時間をおいて再試行する（1-2分後）
-2. Supabaseダッシュボードの設定を確認：
-   • Site URL: http://localhost:3000
-   • Redirect URLs: http://localhost:3000/auth/confirm
-3. 送信制限に達していないか確認
-
-� 一時的な回避策（開発時のみ）：
-Supabaseダッシュボード → Authentication → Users から直接変更
-
-� これはSupabaseの一時的な制限です。
-本番環境では通常正常に動作します。
-
-試行回数: ${retryCount + 1}/3`;
+          errorMessage = `❌ メール送信に失敗しました`;
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = '現在のメールアドレスが確認されていません。まず現在のメールアドレスを確認してください。';
         } else {
@@ -330,35 +285,6 @@ Supabaseダッシュボード → Authentication → Users から直接変更
               {success}
             </Alert>
           )}
-          {debugInfo && (
-            <Alert severity="info" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
-              {debugInfo}
-            </Alert>
-          )}
-          {showHelp && (
-            <Alert severity="warning" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
-              {`📋 開発環境での一時的な解決策：
-
-Supabase内蔵メールが一時的に利用できない場合の手順：
-
-1. Supabaseダッシュボード（https://supabase.com/dashboard）にアクセス
-2. プロジェクトを選択
-3. Authentication → Users に移動
-4. 変更したいユーザー（${user?.email}）を見つけてクリック
-5. Email フィールドを直接編集
-6. Save を押して保存
-7. 「Email verified」をONにする（重要）
-
-✅ 利点：
-• 即座にメールアドレスが変更される
-• SMTP設定不要
-• Supabase内蔵機能のみ使用
-
-⚠️ 注意：
-• これは開発・テスト環境でのみ推奨
-• 本番環境では通常のメール確認フローを使用`}
-            </Alert>
-          )}
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -399,25 +325,6 @@ Supabase内蔵メールが一時的に利用できない場合の手順：
             >
               {loading ? '送信中...' : 'メールアドレス変更を送信'}
             </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleDebugCheck}
-              disabled={loading}
-              sx={{ mt: 1 }}
-            >
-              設定を確認（デバッグ）
-            </Button>
-            <Button
-              variant="text"
-              fullWidth
-              onClick={() => setShowHelp(!showHelp)}
-              disabled={loading}
-              color="secondary"
-              sx={{ mt: 1 }}
-            >
-              {showHelp ? 'ヘルプを隠す' : '手動変更の手順を表示'}
-            </Button>
           </Box>
           <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Typography variant="body2">
@@ -427,15 +334,6 @@ Supabase内蔵メールが一時的に利用できない場合の手順：
                 sx={{ alignSelf: 'center', fontWeight: 'medium' }}
               >
                 ホームに戻る
-              </Link>
-              {' | '}
-              <Link
-                href="https://supabase.com/docs/guides/auth/auth-email"
-                target="_blank"
-                variant="body2"
-                sx={{ alignSelf: 'center', fontWeight: 'medium' }}
-              >
-                Supabase Email設定ガイド
               </Link>
             </Typography>
           </Box>

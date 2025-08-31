@@ -27,8 +27,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
 import { PLAYER_STYLES } from '@/types/constants';
+import PageLayout from '@/components/molescules/PageLayout';
 
 interface MatchGame {
   game_no: number;
@@ -53,8 +53,6 @@ interface MatchResult {
 
 export default function NewEvent() {
   const router = useRouter();
-  const [user, setUser] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
@@ -88,30 +86,6 @@ export default function NewEvent() {
   ]);
 
   const supabase = createClient();
-
-  React.useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-      } else {
-        router.push('/signin');
-      }
-      setLoading(false);
-    };
-
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
-        router.push('/signin');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router, supabase.auth]);
 
   const handleAddMatchResult = () => {
     const newGameNo = matchResults.length + 1;
@@ -214,14 +188,14 @@ export default function NewEvent() {
     for (let i = 0; i < matchResults.length; i++) {
       const match = matchResults[i];
       if (!match.player_team_name.trim() || !match.opponent_team_name.trim()) {
-        setError(`団体戦 ${match.game_no}: チーム名は必須です。`);
+        setError(`試合 ${match.game_no}: チーム名は必須です。`);
         return false;
       }
 
       for (let j = 0; j < match.match_games.length; j++) {
         const game = match.match_games[j];
         if (!game.player_name.trim() || !game.opponent_player_name.trim()) {
-          setError(`団体戦 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
+          setError(`試合 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
           return false;
         }
       }
@@ -305,32 +279,8 @@ export default function NewEvent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '50vh'
-      }}>
-        <CircularProgress />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div
-      key="new-event-form"
-      style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '24px'
-      }}
-    >
+    <PageLayout title="新規試合結果作成">
       <Box display="flex" alignItems="center" gap={2} mb={3}>
         <IconButton onClick={() => router.push('/events')} color="inherit">
           <ArrowBackIcon />
@@ -394,7 +344,7 @@ export default function NewEvent() {
 
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
             <Typography variant="h6">
-              団体戦結果
+              試合結果
             </Typography>
             <Button
               onClick={handleAddMatchResult}
@@ -402,7 +352,7 @@ export default function NewEvent() {
               variant="outlined"
               color="primary"
             >
-              団体戦を追加
+              試合を追加
             </Button>
           </Box>
 
@@ -411,7 +361,7 @@ export default function NewEvent() {
               <CardContent>
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                   <Typography variant="h6">
-                    団体戦 {match.game_no}
+                    試合 {match.game_no}
                   </Typography>
                   {matchResults.length > 1 && (
                     <IconButton
@@ -529,7 +479,7 @@ export default function NewEvent() {
                             <Box display="flex" gap={2} alignItems="center" justifyContent="center">
                               <TextField
                                 label="セット数"
-                                type="number"
+                                type="tel"
                                 slotProps={{ htmlInput: { min: 0, max: 5 } }}
                                 value={game.team_sets}
                                 onChange={(e) => handleGameChange(index, gameIndex, 'team_sets', parseInt(e.target.value) || 0)}
@@ -540,7 +490,7 @@ export default function NewEvent() {
                               </Typography>
                               <TextField
                                 label="相手セット数"
-                                type="number"
+                                type="tel"
                                 slotProps={{ htmlInput: { min: 0, max: 5 } }}
                                 value={game.opponent_sets}
                                 onChange={(e) => handleGameChange(index, gameIndex, 'opponent_sets', parseInt(e.target.value) || 0)}
@@ -615,11 +565,11 @@ export default function NewEvent() {
                     <Chip
                       label={
                         match.player_team_sets > match.opponent_sets ? (
-                          `団体戦勝利 (${match.player_team_sets}-${match.opponent_sets})`
+                          `試合勝利 (${match.player_team_sets}-${match.opponent_sets})`
                         ) : match.player_team_sets < match.opponent_sets ? (
-                          `団体戦敗北 (${match.player_team_sets}-${match.opponent_sets})`
+                          `試合敗北 (${match.player_team_sets}-${match.opponent_sets})`
                         ) : (
-                          `団体戦引き分け (${match.player_team_sets}-${match.opponent_sets})`
+                          `試合引き分け (${match.player_team_sets}-${match.opponent_sets})`
                         )
                       }
                       color={
@@ -652,6 +602,6 @@ export default function NewEvent() {
           </Box>
         </form>
       </Paper>
-    </div>
+    </PageLayout>
   );
 }

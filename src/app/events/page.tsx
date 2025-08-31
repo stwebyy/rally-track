@@ -9,80 +9,22 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
-import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Toolbar from '@mui/material/Toolbar';
-import AppBar from '@mui/material/AppBar';
-import Divider from '@mui/material/Divider';
 import { DataGrid, GridColDef, GridActionsCellItem, GridSortModel, GridFilterModel } from '@mui/x-data-grid';
 import { gridClasses } from '@mui/x-data-grid';
 
 // Icons
-import MenuIcon from '@mui/icons-material/Menu';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SportsIcon from '@mui/icons-material/Sports';
-import LockIcon from '@mui/icons-material/Lock';
-import EmailIcon from '@mui/icons-material/Email';
-import LogoutIcon from '@mui/icons-material/Logout';
-import SearchIcon from '@mui/icons-material/Search';
 
 import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
-
-const DRAWER_WIDTH = 240;
-const MINI_DRAWER_WIDTH = 64;
-
-interface Event {
-  id: number;
-  name: string;
-  date: string;
-  location: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface MatchResult {
-  id: number;
-  event_id: number;
-  team_name: string;
-  player_name: string;
-  player_style: string;
-  opponent_team_name: string;
-  opponent_player_name: string;
-  opponent_player_style: string;
-  team_sets: number;
-  opponent_sets: number;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface EventWithMatchResults extends Event {
-  match_results: MatchResult[];
-}
+import { EventWithMatchResults } from '@/types/event';
+import { PageLayout, SearchField } from '@/components';
 
 export default function Events() {
   const router = useRouter();
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
-  const [user, setUser] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [isDesktopSidebarExpanded, setIsDesktopSidebarExpanded] = React.useState(true);
-  const [isHydrated, setIsHydrated] = React.useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
   const [events, setEvents] = React.useState<EventWithMatchResults[]>([]);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -90,61 +32,13 @@ export default function Events() {
   const [filterModel, setFilterModel] = React.useState<GridFilterModel>({ items: [] });
   const [searchText, setSearchText] = React.useState('');
   const [filteredEvents, setFilteredEvents] = React.useState<EventWithMatchResults[]>([]);
+  const [isClient, setIsClient] = React.useState(false);
   const supabase = createClient();
 
+  // クライアントサイドでのマウント確認
   React.useEffect(() => {
-    // ユーザー状態を取得
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-      } else {
-        // ログインしていない場合はサインインページにリダイレクト
-        router.push('/signin');
-      }
-      setLoading(false);
-    };
-
-    getUser();
-
-    // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
-        router.push('/signin');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth, router]);
-
-  // クライアントサイドでのみローカルストレージから設定を読み込む
-  React.useEffect(() => {
-    setIsHydrated(true);
-    try {
-      const saved = localStorage.getItem('rally-track-sidebar-expanded');
-      if (saved !== null) {
-        setIsDesktopSidebarExpanded(JSON.parse(saved));
-      }
-    } catch {
-      // エラーが発生した場合はデフォルト値を使用
-    }
+    setIsClient(true);
   }, []);
-
-  // Filter events based on search text
-  React.useEffect(() => {
-    if (!searchText.trim()) {
-      setFilteredEvents(events);
-    } else {
-      const filtered = events.filter(event =>
-        event.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        event.location?.toLowerCase().includes(searchText.toLowerCase()) ||
-        event.date.includes(searchText)
-      );
-      setFilteredEvents(filtered);
-    }
-  }, [events, searchText]);
 
   // データを取得する関数
   const loadData = React.useCallback(async () => {
@@ -173,38 +67,22 @@ export default function Events() {
   }, [supabase]);
 
   React.useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, loadData]);
+    loadData();
+  }, [loadData]);
 
-  // サイドバー状態をローカルストレージに保存
+  // Filter events based on search text
   React.useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem('rally-track-sidebar-expanded', JSON.stringify(isDesktopSidebarExpanded));
-    }
-  }, [isDesktopSidebarExpanded, isHydrated]);
-
-  const handleDesktopSidebarToggle = () => {
-    setIsDesktopSidebarExpanded(!isDesktopSidebarExpanded);
-  };
-
-  const handleMobileSidebarToggle = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
-  };
-
-  const handleDrawerToggle = () => {
-    if (isDesktop) {
-      handleDesktopSidebarToggle();
+    if (!searchText.trim()) {
+      setFilteredEvents(events);
     } else {
-      handleMobileSidebarToggle();
+      const filtered = events.filter(event =>
+        event.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.date.includes(searchText)
+      );
+      setFilteredEvents(filtered);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/signin');
-  };
+  }, [events, searchText]);
 
   const handleRefresh = () => {
     if (!isDataLoading) {
@@ -249,9 +127,13 @@ export default function Events() {
       {
         field: 'date',
         headerName: '年月日',
-        type: 'date',
         width: 120,
-        valueGetter: (value: string) => value && new Date(value),
+        // 日付文字列から年月日部分のみを表示
+        valueFormatter: (value: string) => {
+          if (!value) return '';
+          // YYYY-MM-DD形式の日付文字列をそのまま表示
+          return value.split('T')[0];
+        },
       },
       {
         field: 'name',
@@ -294,420 +176,107 @@ export default function Events() {
     [handleRowEdit, handleRowDelete],
   );
 
-  const drawer = (
-    <div>
-      <Toolbar />
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton
-            selected
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: 'action.selected',
-                color: 'text.primary',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: 'primary.main',
-                },
-              },
-            }}
-          >
-            <ListItemIcon>
-              <SportsIcon />
-            </ListItemIcon>
-            <ListItemText primary="試合結果" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => router.push('/auth/update-password')}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
-            <ListItemIcon>
-              <LockIcon />
-            </ListItemIcon>
-            <ListItemText primary="パスワード更新" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => router.push('/auth/change-email')}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
-            <ListItemIcon>
-              <EmailIcon />
-            </ListItemIcon>
-            <ListItemText primary="メールアドレス変更" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleSignOut}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
-            <ListItemIcon>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="サインアウト" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </div>
-  );
-
-  // ミニサイドバーのコンテンツ（アイコンのみ）
-  const miniDrawer = (
-    <div>
-      <Toolbar />
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <Tooltip title="試合結果" placement="right">
-            <ListItemButton
-              selected
-              sx={{
-                justifyContent: 'center',
-                px: 2.5,
-                borderRadius: 1,
-                mx: 1,
-                mb: 0.5,
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, color: 'inherit' }}>
-                <SportsIcon />
-              </ListItemIcon>
-            </ListItemButton>
-          </Tooltip>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <Tooltip title="パスワード更新" placement="right">
-            <ListItemButton
-              onClick={() => router.push('/auth/update-password')}
-              sx={{
-                justifyContent: 'center',
-                px: 2.5,
-                borderRadius: 1,
-                mx: 1,
-                mb: 0.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <LockIcon />
-              </ListItemIcon>
-            </ListItemButton>
-          </Tooltip>
-        </ListItem>
-        <ListItem disablePadding>
-          <Tooltip title="メールアドレス変更" placement="right">
-            <ListItemButton
-              onClick={() => router.push('/auth/change-email')}
-              sx={{
-                justifyContent: 'center',
-                px: 2.5,
-                borderRadius: 1,
-                mx: 1,
-                mb: 0.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <EmailIcon />
-              </ListItemIcon>
-            </ListItemButton>
-          </Tooltip>
-        </ListItem>
-        <ListItem disablePadding>
-          <Tooltip title="サインアウト" placement="right">
-            <ListItemButton
-              onClick={handleSignOut}
-              sx={{
-                justifyContent: 'center',
-                px: 2.5,
-                borderRadius: 1,
-                mx: 1,
-                mb: 0.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <LogoutIcon />
-              </ListItemIcon>
-            </ListItemButton>
-          </Tooltip>
-        </ListItem>
-      </List>
-    </div>
-  );
-
-  if (loading || !isHydrated) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}
-      >
-        <Typography>読み込み中...</Typography>
-      </Box>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        color="default"
-        elevation={0}
-        sx={{
-          width: {
-            xs: '100%',
-            md: `calc(100% - ${isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH}px)`
-          },
-          ml: {
-            xs: 0,
-            md: `${isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH}px`
-          },
-          transition: (theme) => theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="toggle drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
+    <PageLayout title="試合結果">
+      {/* Page header with actions */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1">
+          試合結果
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="データを再読み込み" placement="left" enterDelay={1000}>
+            <div>
+              <IconButton
+                size="small"
+                aria-label="refresh"
+                onClick={handleRefresh}
+                disabled={isDataLoading}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </div>
+          </Tooltip>
+          <Button
+            variant="contained"
+            onClick={handleCreateClick}
+            startIcon={<AddIcon />}
           >
-            {isDesktop ? (isDesktopSidebarExpanded ? <MenuOpenIcon /> : <MenuIcon />) : <MenuIcon />}
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Rally Track - 試合結果管理
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      {/* Sidebar */}
-      <Box
-        component="nav"
-        sx={{
-          width: isDesktop ? (isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH) : 0,
-          flexShrink: 0,
-          transition: (theme) => theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-        }}
-      >
-        {/* Mobile Drawer */}
-        <Drawer
-          variant="temporary"
-          open={isMobileSidebarOpen}
-          onClose={handleMobileSidebarToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: DRAWER_WIDTH,
-              backgroundColor: 'background.paper',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-
-        {/* Desktop Drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH,
-              transition: (theme) => theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-              overflowX: 'hidden',
-              backgroundColor: 'background.paper',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-            },
-          }}
-          open
-        >
-          {isDesktopSidebarExpanded ? drawer : miniDrawer}
-        </Drawer>
+            新規作成
+          </Button>
+        </Stack>
       </Box>
 
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: {
-            xs: '100%',
-            md: `calc(100% - ${isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH}px)`
-          },
-          transition: (theme) => theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-          backgroundColor: 'background.default',
-        }}
-      >
-        <Toolbar />
+      {/* Search field */}
+      <SearchField
+        value={searchText}
+        onChange={setSearchText}
+        placeholder="試合名、場所、日付で検索..."
+      />
 
-        {/* Page header with actions */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            試合結果
-          </Typography>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Tooltip title="データを再読み込み" placement="left" enterDelay={1000}>
-              <div>
-                <IconButton
-                  size="small"
-                  aria-label="refresh"
-                  onClick={handleRefresh}
-                  disabled={isDataLoading}
-                >
-                  <RefreshIcon />
-                </IconButton>
-              </div>
-            </Tooltip>
-            <Button
-              variant="contained"
-              onClick={handleCreateClick}
-              startIcon={<AddIcon />}
-            >
-              新規作成
-            </Button>
-          </Stack>
-        </Box>
-
-        {/* Search field */}
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            placeholder="試合名、場所、日付で検索..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            sx={{ maxWidth: 400 }}
+      {/* Data Grid */}
+      <Box sx={{
+        height: 600,
+        width: '100%',
+        backgroundColor: 'background.paper',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+      }}>
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        ) : isClient ? (
+          <DataGrid
+            rows={filteredEvents}
+            columns={columns}
+            loading={isDataLoading}
+            onRowClick={handleRowClick}
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 10 }
+              },
+              sorting: {
+                sortModel: sortModel,
+              },
+            }}
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
+            filterModel={filterModel}
+            onFilterModelChange={setFilterModel}
+            disableRowSelectionOnClick
             slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
+              loadingOverlay: {
+                variant: 'circular-progress',
+                noRowsVariant: 'circular-progress',
+              },
+              baseIconButton: {
+                size: 'small',
+              },
+            }}
+            sx={{
+              [`& .${gridClasses.columnHeader}`]: {
+                backgroundColor: '#f5f6fa',
+                outline: 'transparent',
+              },
+              [`& .${gridClasses.cell}`]: {
+                outline: 'transparent',
+              },
+              [`& .${gridClasses.columnHeader}:focus-within, & .${gridClasses.cell}:focus-within`]: {
+                outline: 'none',
+              },
+              [`& .${gridClasses.row}:hover`]: {
+                cursor: 'pointer',
               },
             }}
           />
-        </Box>
-
-        {/* Data Grid */}
-        <Box sx={{
-          height: 600,
-          width: '100%',
-          backgroundColor: 'background.paper',
-          borderRadius: 1,
-          border: '1px solid',
-          borderColor: 'divider',
-        }}>
-          {error ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          ) : (
-            <DataGrid
-              rows={filteredEvents}
-              columns={columns}
-              loading={isDataLoading}
-              onRowClick={handleRowClick}
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 10 }
-                },
-                sorting: {
-                  sortModel: sortModel,
-                },
-              }}
-              sortModel={sortModel}
-              onSortModelChange={setSortModel}
-              filterModel={filterModel}
-              onFilterModelChange={setFilterModel}
-              disableRowSelectionOnClick
-              slotProps={{
-                loadingOverlay: {
-                  variant: 'circular-progress',
-                  noRowsVariant: 'circular-progress',
-                },
-                baseIconButton: {
-                  size: 'small',
-                },
-              }}
-              sx={{
-                [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
-                  outline: 'transparent',
-                },
-                [`& .${gridClasses.columnHeader}:focus-within, & .${gridClasses.cell}:focus-within`]: {
-                  outline: 'none',
-                },
-                [`& .${gridClasses.row}:hover`]: {
-                  cursor: 'pointer',
-                },
-              }}
-            />
-          )}
-        </Box>
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+            <Typography>読み込み中...</Typography>
+          </Box>
+        )}
       </Box>
-    </Box>
+    </PageLayout>
   );
-}
+};

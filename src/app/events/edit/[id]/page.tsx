@@ -11,10 +11,6 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -26,46 +22,19 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
-import { PLAYER_STYLES } from '@/types/constants';
-
-interface Event {
-  id: number;
-  name: string;
-  date: string;
-  location?: string;
-}
-
-interface MatchGame {
-  id?: number;
-  match_result_id?: number;
-  game_no: number;
-  player_name: string;
-  player_style: string;
-  opponent_player_name: string;
-  opponent_player_style: string;
-  team_sets: number;
-  opponent_sets: number;
-}
-
-interface MatchResult {
-  id?: number;
-  event_id: number;
-  game_no: number;
-  player_team_name: string;
-  opponent_team_name: string;
-  player_team_sets: number;
-  opponent_sets: number;
-  notes: string;
-  match_games: MatchGame[];
-}
+import { Event, MatchResult, MatchGame } from '@/types/event';
+import {
+  PageLayout,
+  EventForm,
+  MatchGameForm,
+  ScoreDisplay
+} from '@/components';
 
 export default function EditEvent() {
   const router = useRouter();
   const params = useParams();
   const eventId = params.id as string;
 
-  const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -83,84 +52,72 @@ export default function EditEvent() {
 
   const supabase = createClient();
 
-  React.useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        await loadEventData();
+  const loadEventData = React.useCallback(async () => {
+    try {
+      // Load event data
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (eventError) throw eventError;
+
+      setEvent(eventData);
+      setEventName(eventData.name);
+      setEventDate(eventData.date);
+      setEventLocation(eventData.location || '');
+
+      // Load match results with their games
+      const { data: matchData, error: matchError } = await supabase
+        .from('match_results')
+        .select(`
+          *,
+          match_games (*)
+        `)
+        .eq('event_id', eventId)
+        .order('id');
+
+      if (matchError) throw matchError;
+
+      if (matchData && matchData.length > 0) {
+        setMatchResults(matchData.map(match => ({
+          ...match,
+          notes: match.notes || '',
+          match_games: match.match_games || [],
+        })));
       } else {
-        // ログインしていない場合はサインインページにリダイレクト
-        router.push('/signin');
-      }
-    };
-
-    const loadEventData = async () => {
-      try {
-        // Load event data
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('*')
-          .eq('id', eventId)
-          .single();
-
-        if (eventError) throw eventError;
-
-        setEvent(eventData);
-        setEventName(eventData.name);
-        setEventDate(eventData.date);
-        setEventLocation(eventData.location || '');
-
-        // Load match results with their games
-        const { data: matchData, error: matchError } = await supabase
-          .from('match_results')
-          .select(`
-            *,
-            match_games (*)
-          `)
-          .eq('event_id', eventId)
-          .order('id');
-
-        if (matchError) throw matchError;
-
-        if (matchData && matchData.length > 0) {
-          setMatchResults(matchData.map(match => ({
-            ...match,
-            notes: match.notes || '',
-            match_games: match.match_games || [],
-          })));
-        } else {
-          // No matches exist, add a default one
-          setMatchResults([{
-            event_id: parseInt(eventId),
+        // No matches exist, add a default one
+        setMatchResults([{
+          event_id: parseInt(eventId),
+          game_no: 1,
+          player_team_name: '',
+          opponent_team_name: '',
+          player_team_sets: 0,
+          opponent_sets: 0,
+          notes: '',
+          match_games: [{
             game_no: 1,
-            player_team_name: '',
-            opponent_team_name: '',
-            player_team_sets: 0,
+            player_name: '',
+            player_style: '',
+            opponent_player_name: '',
+            opponent_player_style: '',
+            team_sets: 0,
             opponent_sets: 0,
-            notes: '',
-            match_games: [{
-              game_no: 1,
-              player_name: '',
-              player_style: '',
-              opponent_player_name: '',
-              opponent_player_style: '',
-              team_sets: 0,
-              opponent_sets: 0,
-            }],
-          }]);
-        }
-
-      } catch (error) {
-        console.error('Error loading event data:', error);
-        setError('試合データの読み込みに失敗しました。');
-      } finally {
-        setLoading(false);
+          }],
+        }]);
       }
-    };
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId, supabase]);
 
-    getUser();
-  }, [eventId, router, supabase, supabase.auth]);
+  React.useEffect(() => {
+    loadEventData();
+  }, [loadEventData]);
 
   const handleAddMatchResult = () => {
     const newGameNo = matchResults.length + 1;
@@ -267,14 +224,14 @@ export default function EditEvent() {
     for (let i = 0; i < matchResults.length; i++) {
       const match = matchResults[i];
       if (!match.player_team_name.trim() || !match.opponent_team_name.trim()) {
-        setError(`団体戦 ${match.game_no}: チーム名は必須です。`);
+        setError(`試合 ${match.game_no}: チーム名は必須です。`);
         return false;
       }
 
       for (let j = 0; j < match.match_games.length; j++) {
         const game = match.match_games[j];
         if (!game.player_name.trim() || !game.opponent_player_name.trim()) {
-          setError(`団体戦 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
+          setError(`試合 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
           return false;
         }
       }
@@ -422,39 +379,31 @@ export default function EditEvent() {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '50vh'
-      }}>
-        <CircularProgress />
-      </div>
+      <PageLayout title="読み込み中">
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh'
+        }}>
+          <CircularProgress />
+        </Box>
+      </PageLayout>
     );
   }
 
-  if (!user || !event) {
-    if (!user) {
-      return null;
-    }
+  if (!event) {
     return (
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
+      <PageLayout title="エラー">
         <Alert severity="error">
           試合データが見つかりません。
         </Alert>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div
-      key={`edit-event-${eventId}`}
-      style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '24px'
-      }}
-    >
+    <PageLayout title="試合結果を編集">
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <IconButton
@@ -483,52 +432,21 @@ export default function EditEvent() {
 
       <Box component="form" onSubmit={handleSubmit}>
         {/* Event Information */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            試合情報
-          </Typography>
-          <Stack spacing={3}>
-            <TextField
-              label="試合名"
-              required
-              fullWidth
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              disabled={saving}
-              placeholder="例: 第1回練習試合"
-            />
-
-            <TextField
-              label="試合日"
-              type="date"
-              required
-              fullWidth
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              disabled={saving}
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
-
-            <TextField
-              label="試合場所"
-              fullWidth
-              value={eventLocation}
-              onChange={(e) => setEventLocation(e.target.value)}
-              disabled={saving}
-              placeholder="例: 体育館A"
-            />
-          </Stack>
-        </Paper>
+        <EventForm
+          eventName={eventName}
+          eventDate={eventDate}
+          eventLocation={eventLocation}
+          onEventNameChange={setEventName}
+          onEventDateChange={setEventDate}
+          onEventLocationChange={setEventLocation}
+          disabled={saving}
+        />
 
         {/* Match Results */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">
-              団体戦結果
+              試合結果
             </Typography>
             <Button
               startIcon={<AddIcon />}
@@ -536,7 +454,7 @@ export default function EditEvent() {
               disabled={saving}
               variant="outlined"
             >
-              団体戦を追加
+              試合を追加
             </Button>
           </Box>
 
@@ -546,7 +464,7 @@ export default function EditEvent() {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">
-                      団体戦 {match.game_no} {match.id && <Chip label="保存済み" size="small" color="primary" />}
+                      試合 {match.game_no} {match.id && <Chip label="保存済み" size="small" color="primary" />}
                     </Typography>
                     {matchResults.length > 1 && (
                       <IconButton
@@ -582,27 +500,13 @@ export default function EditEvent() {
                       />
                     </Box>
 
-                    <Box display="flex" gap={2} alignItems="center" justifyContent="center">
-                      <Typography variant="body1" sx={{ minWidth: 100, textAlign: 'center' }}>
-                        {match.player_team_name || '自チーム'}
-                      </Typography>
-                      <Chip
-                        label={match.player_team_sets || 0}
-                        color={(match.player_team_sets || 0) > (match.opponent_sets || 0) ? 'success' : 'default'}
-                        sx={{ minWidth: 60, fontSize: '1.2rem' }}
-                      />
-                      <Typography variant="h6" sx={{ mx: 2 }}>
-                        vs
-                      </Typography>
-                      <Chip
-                        label={match.opponent_sets || 0}
-                        color={(match.opponent_sets || 0) > (match.player_team_sets || 0) ? 'error' : 'default'}
-                        sx={{ minWidth: 60, fontSize: '1.2rem' }}
-                      />
-                      <Typography variant="body1" sx={{ minWidth: 100, textAlign: 'center' }}>
-                        {match.opponent_team_name || '相手チーム'}
-                      </Typography>
-                    </Box>
+                    <ScoreDisplay
+                      playerName={match.player_team_name || '自チーム'}
+                      playerScore={match.player_team_sets || 0}
+                      opponentName={match.opponent_team_name || '相手チーム'}
+                      opponentScore={match.opponent_sets || 0}
+                      readonly={true}
+                    />
 
                     <Box>
                       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -621,129 +525,14 @@ export default function EditEvent() {
                       </Box>
 
                       {match.match_games.map((game, gameIndex) => (
-                        <Card key={gameIndex} variant="outlined" sx={{ mb: 2 }}>
-                          <CardContent sx={{ py: 2 }}>
-                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                              <Typography variant="subtitle2">
-                                第{game.game_no}試合
-                              </Typography>
-                              {match.match_games.length > 1 && (
-                                <IconButton
-                                  onClick={() => handleRemoveGame(index, gameIndex)}
-                                  color="error"
-                                  size="small"
-                                  disabled={saving}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              )}
-                            </Box>
-
-                            <Stack spacing={2}>
-                              <Box display="flex" gap={2}>
-                                <TextField
-                                  label="選手名"
-                                  required
-                                  fullWidth
-                                  value={game.player_name}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'player_name', e.target.value)}
-                                  disabled={saving}
-                                  placeholder="例：田中太郎"
-                                />
-                                <FormControl fullWidth>
-                                  <InputLabel>戦型</InputLabel>
-                                  <Select
-                                    value={game.player_style}
-                                    onChange={(e) => handleGameChange(index, gameIndex, 'player_style', e.target.value)}
-                                    label="戦型"
-                                    disabled={saving}
-                                  >
-                                    <MenuItem value="">戦型（任意項目）</MenuItem>
-                                    {PLAYER_STYLES.map((style) => (
-                                      <MenuItem key={style} value={style}>
-                                        {style}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </Box>
-
-                              <Box display="flex" gap={2} alignItems="center" justifyContent="center">
-                                <TextField
-                                  label="セット数"
-                                  type="number"
-                                  slotProps={{ htmlInput: { min: 0, max: 5 } }}
-                                  value={game.team_sets}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'team_sets', parseInt(e.target.value) || 0)}
-                                  sx={{ width: 120 }}
-                                  disabled={saving}
-                                />
-                                <Typography variant="h6" sx={{ mx: 2 }}>
-                                  vs
-                                </Typography>
-                                <TextField
-                                  label="相手セット数"
-                                  type="number"
-                                  slotProps={{ htmlInput: { min: 0, max: 5 } }}
-                                  value={game.opponent_sets}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_sets', parseInt(e.target.value) || 0)}
-                                  sx={{ width: 120 }}
-                                  disabled={saving}
-                                />
-                              </Box>
-
-                              <Box display="flex" gap={2}>
-                                <TextField
-                                  label="相手選手名"
-                                  required
-                                  fullWidth
-                                  value={game.opponent_player_name}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name', e.target.value)}
-                                  disabled={saving}
-                                  placeholder="例：佐藤花子"
-                                />
-                                <FormControl fullWidth>
-                                  <InputLabel>相手戦型</InputLabel>
-                                  <Select
-                                    value={game.opponent_player_style}
-                                    onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style', e.target.value)}
-                                    label="相手戦型"
-                                    disabled={saving}
-                                  >
-                                    <MenuItem value="">戦型（任意項目）</MenuItem>
-                                    {PLAYER_STYLES.map((style) => (
-                                      <MenuItem key={style} value={style}>
-                                        {style}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </Box>
-
-                              <Box display="flex" justifyContent="center">
-                                <Chip
-                                  label={
-                                    game.team_sets > game.opponent_sets ? (
-                                      `勝利 (${game.team_sets}-${game.opponent_sets})`
-                                    ) : game.team_sets < game.opponent_sets ? (
-                                      `敗北 (${game.team_sets}-${game.opponent_sets})`
-                                    ) : (
-                                      `引き分け (${game.team_sets}-${game.opponent_sets})`
-                                    )
-                                  }
-                                  color={
-                                    game.team_sets > game.opponent_sets
-                                      ? 'success'
-                                      : game.team_sets < game.opponent_sets
-                                      ? 'error'
-                                      : 'default'
-                                  }
-                                  size="small"
-                                />
-                              </Box>
-                            </Stack>
-                          </CardContent>
-                        </Card>
+                        <MatchGameForm
+                          key={gameIndex}
+                          game={game}
+                          totalGames={match.match_games.length}
+                          onGameChange={(field, value) => handleGameChange(index, gameIndex, field, value)}
+                          onRemoveGame={match.match_games.length > 1 ? () => handleRemoveGame(index, gameIndex) : undefined}
+                          disabled={saving}
+                        />
                       ))}
                     </Box>
 
@@ -762,11 +551,11 @@ export default function EditEvent() {
                       <Chip
                         label={
                           (match.player_team_sets || 0) > (match.opponent_sets || 0) ? (
-                            `団体戦勝利 (${match.player_team_sets}-${match.opponent_sets})`
+                            `試合勝利 (${match.player_team_sets}-${match.opponent_sets})`
                           ) : (match.player_team_sets || 0) < (match.opponent_sets || 0) ? (
-                            `団体戦敗北 (${match.player_team_sets}-${match.opponent_sets})`
+                            `試合敗北 (${match.player_team_sets}-${match.opponent_sets})`
                           ) : (
-                            `団体戦引き分け (${match.player_team_sets}-${match.opponent_sets})`
+                            `試合引き分け (${match.player_team_sets}-${match.opponent_sets})`
                           )
                         }
                         color={
@@ -806,6 +595,6 @@ export default function EditEvent() {
           </Button>
         </Box>
       </Box>
-    </div>
+    </PageLayout>
   );
 }

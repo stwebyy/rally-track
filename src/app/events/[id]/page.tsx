@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Card from '@mui/material/Card';
@@ -19,15 +18,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Toolbar from '@mui/material/Toolbar';
-import AppBar from '@mui/material/AppBar';
-import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -38,18 +28,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import MenuIcon from '@mui/icons-material/Menu';
-import SportsIcon from '@mui/icons-material/Sports';
-import LockIcon from '@mui/icons-material/Lock';
-import EmailIcon from '@mui/icons-material/Email';
-import LogoutIcon from '@mui/icons-material/Logout';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
-
-const DRAWER_WIDTH = 240;
+import PageLayout from '@/components/molescules/PageLayout';
 
 interface Event {
   id: number;
@@ -96,41 +79,11 @@ export default function EventDetail() {
   const params = useParams();
   const eventId = params.id as string;
 
-  const [user, setUser] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [mobileOpen, setMobileOpen] = React.useState(false);
   const [event, setEvent] = React.useState<EventWithMatchResults | null>(null);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const supabase = createClient();
-
-  React.useEffect(() => {
-    // ユーザー状態を取得
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-      } else {
-        // ログインしていない場合はサインインページにリダイレクト
-        router.push('/signin');
-      }
-      setLoading(false);
-    };
-
-    getUser();
-
-    // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
-        router.push('/signin');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth, router]);
 
   // イベントデータを取得する関数
   const loadEventData = React.useCallback(async () => {
@@ -165,19 +118,10 @@ export default function EventDetail() {
   }, [supabase, eventId]);
 
   React.useEffect(() => {
-    if (user && eventId) {
+    if (eventId) {
       loadEventData();
     }
-  }, [user, eventId, loadEventData]);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/signin');
-  };
+  }, [eventId, loadEventData]);
 
   const handleBack = () => {
     router.push('/events');
@@ -216,216 +160,29 @@ export default function EventDetail() {
     }
   };
 
-  const drawer = (
-    <div>
-      <Toolbar />
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => router.push('/events')}>
-            <ListItemIcon>
-              <SportsIcon />
-            </ListItemIcon>
-            <ListItemText primary="試合結果" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => router.push('/auth/update-password')}>
-            <ListItemIcon>
-              <LockIcon />
-            </ListItemIcon>
-            <ListItemText primary="パスワード更新" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => router.push('/auth/change-email')}>
-            <ListItemIcon>
-              <EmailIcon />
-            </ListItemIcon>
-            <ListItemText primary="メールアドレス変更" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleSignOut}>
-            <ListItemIcon>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="ログアウト" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}
-      >
-        <Typography>読み込み中...</Typography>
-      </Box>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   if (isDataLoading) {
     return (
-      <Box sx={{ display: 'flex' }}>
-        <AppBar position="fixed" color="default" sx={{ width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` }, ml: { sm: `${DRAWER_WIDTH}px` } }}>
-          <Toolbar>
-            <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { sm: 'none' } }}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div">
-              Rally Track - 詳細表示
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}>
-          <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', sm: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH } }}>
-            {drawer}
-          </Drawer>
-          <Drawer variant="permanent" sx={{ display: { xs: 'none', sm: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH } }} open>
-            {drawer}
-          </Drawer>
-        </Box>
-        <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
-          <Toolbar />
-          <Typography>データを読み込み中...</Typography>
-        </Box>
-      </Box>
+      <PageLayout title="詳細表示">
+        <Typography>データを読み込み中...</Typography>
+      </PageLayout>
     );
   }
 
   if (error || !event) {
     return (
-      <Box sx={{ display: 'flex' }}>
-        <AppBar
-          position="fixed"
-          color="default"
-          elevation={0}
-          sx={{
-            width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-            ml: { sm: `${DRAWER_WIDTH}px` },
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-          }}
-        >
-          <Toolbar>
-            <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { sm: 'none' } }}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div">
-              Rally Track - エラー
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}>
-          <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', sm: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH } }}>
-            {drawer}
-          </Drawer>
-          <Drawer variant="permanent" sx={{ display: { xs: 'none', sm: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH } }} open>
-            {drawer}
-          </Drawer>
-        </Box>
-        <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
-          <Toolbar />
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error || 'イベントが見つかりません'}
-          </Alert>
-          <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBackIcon />}>
-            一覧に戻る
-          </Button>
-        </Box>
-      </Box>
+      <PageLayout title="エラー">
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error || 'イベントが見つかりません'}
+        </Alert>
+        <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBackIcon />}>
+          一覧に戻る
+        </Button>
+      </PageLayout>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        color="default"
-        elevation={0}
-        sx={{
-          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-          ml: { sm: `${DRAWER_WIDTH}px` },
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Rally Track - {event.name}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      {/* Sidebar */}
-      <Box
-        component="nav"
-        sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-          backgroundColor: 'background.default',
-        }}
-      >
-        <Toolbar />
+    <PageLayout title={event.name}>
 
         {/* Header with actions */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -496,8 +253,8 @@ export default function EventDetail() {
         {/* Match Results */}
         <Card>
           <CardHeader
-            title="団体戦結果"
-            subheader={`${event.match_results?.length || 0}件の団体戦`}
+            title="試合結果"
+            subheader={`${event.match_results?.length || 0}件の試合`}
           />
           <CardContent>
             {event.match_results && event.match_results.length > 0 ? (
@@ -568,7 +325,7 @@ export default function EventDetail() {
                         </TableContainer>
                       ) : (
                         <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                          この団体戦の詳細な試合結果はまだ登録されていません
+                          この試合の詳細な試合結果はまだ登録されていません
                         </Typography>
                       )}
                     </CardContent>
@@ -582,33 +339,32 @@ export default function EventDetail() {
             )}
           </CardContent>
         </Card>
-      </Box>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          イベントを削除しますか？
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            「{event.name}」を削除します。この操作は元に戻せません。
-            関連する試合結果もすべて削除されます。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            キャンセル
-          </Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            削除
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
+          <DialogTitle id="delete-dialog-title">
+            イベントを削除しますか？
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-dialog-description">
+              「{event.name}」を削除します。この操作は元に戻せません。
+              関連する試合結果もすべて削除されます。
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleDelete} color="error" variant="contained">
+              削除
+            </Button>
+          </DialogActions>
+        </Dialog>
+    </PageLayout>
   );
 }

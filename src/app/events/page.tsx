@@ -639,12 +639,14 @@ export default function Events() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             sx={{ maxWidth: 400 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         </Box>

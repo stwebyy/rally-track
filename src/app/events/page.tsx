@@ -9,6 +9,8 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -32,6 +34,7 @@ import SportsIcon from '@mui/icons-material/Sports';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -85,6 +88,8 @@ export default function Events() {
   const [error, setError] = React.useState<string | null>(null);
   const [sortModel, setSortModel] = React.useState<GridSortModel>([{ field: 'date', sort: 'desc' }]);
   const [filterModel, setFilterModel] = React.useState<GridFilterModel>({ items: [] });
+  const [searchText, setSearchText] = React.useState('');
+  const [filteredEvents, setFilteredEvents] = React.useState<EventWithMatchResults[]>([]);
   const supabase = createClient();
 
   React.useEffect(() => {
@@ -126,6 +131,20 @@ export default function Events() {
       // エラーが発生した場合はデフォルト値を使用
     }
   }, []);
+
+  // Filter events based on search text
+  React.useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredEvents(events);
+    } else {
+      const filtered = events.filter(event =>
+        event.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.date.includes(searchText)
+      );
+      setFilteredEvents(filtered);
+    }
+  }, [events, searchText]);
 
   // データを取得する関数
   const loadData = React.useCallback(async () => {
@@ -612,6 +631,24 @@ export default function Events() {
           </Stack>
         </Box>
 
+        {/* Search field */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="試合名、場所、日付で検索..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            sx={{ maxWidth: 400 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
         {/* Data Grid */}
         <Box sx={{
           height: 600,
@@ -627,7 +664,7 @@ export default function Events() {
             </Alert>
           ) : (
             <DataGrid
-              rows={events}
+              rows={filteredEvents}
               columns={columns}
               loading={isDataLoading}
               onRowClick={handleRowClick}
@@ -645,6 +682,15 @@ export default function Events() {
               filterModel={filterModel}
               onFilterModelChange={setFilterModel}
               disableRowSelectionOnClick
+              slotProps={{
+                loadingOverlay: {
+                  variant: 'circular-progress',
+                  noRowsVariant: 'circular-progress',
+                },
+                baseIconButton: {
+                  size: 'small',
+                },
+              }}
               sx={{
                 [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
                   outline: 'transparent',
@@ -654,15 +700,6 @@ export default function Events() {
                 },
                 [`& .${gridClasses.row}:hover`]: {
                   cursor: 'pointer',
-                },
-              }}
-              slotProps={{
-                loadingOverlay: {
-                  variant: 'circular-progress',
-                  noRowsVariant: 'circular-progress',
-                },
-                baseIconButton: {
-                  size: 'small',
                 },
               }}
             />

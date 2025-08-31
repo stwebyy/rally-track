@@ -11,18 +11,12 @@ import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
 
 // Icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -265,115 +259,116 @@ export default function EventDetail() {
           <CardContent>
             {event.match_results && event.match_results.length > 0 ? (
               <Stack spacing={3}>
-                {event.match_results.map((result) => (
-                  <Card key={result.id} variant="outlined">
-                    <CardHeader
-                      title={`${result.player_team_name} vs ${result.opponent_team_name}`}
-                      subheader={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                          {getResultChip(result.player_team_sets, result.opponent_sets)}
-                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                            {result.player_team_sets} - {result.opponent_sets}
-                          </Typography>
-                        </Box>
-                      }
-                    />
+                {event.match_results.map((matchResult) => (
+                  <Card key={matchResult.id} variant="outlined">
                     <CardContent>
-                      {/* Individual Games */}
-                      {result.match_games && result.match_games.length > 0 ? (
-                        <TableContainer component={Paper} variant="outlined">
-                          <Table size="small" sx={{ '& .MuiTableCell-root': { borderRight: '1px solid rgba(224, 224, 224, 1)' } }}>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold' }}>試合</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>形式</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>選手名</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>プレースタイル</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>相手選手</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>相手スタイル</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 'bold' }}>セット数</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', borderRight: 'none' }}>結果</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {result.match_games
-                                .sort((a, b) => a.game_no - b.game_no)
-                                .map((game) => (
-                                <React.Fragment key={game.id}>
-                                  <TableRow>
-                                    <TableCell rowSpan={game.is_doubles ? 2 : 1}>
-                                      {game.game_no}試合目
-                                    </TableCell>
-                                    <TableCell rowSpan={game.is_doubles ? 2 : 1}>
-                                      <Chip
-                                        label={game.is_doubles ? 'ダブルス' : 'シングルス'}
-                                        size="small"
-                                        variant="outlined"
-                                        color={game.is_doubles ? 'secondary' : 'primary'}
-                                      />
-                                    </TableCell>
-                                    <TableCell>{game.player_name}</TableCell>
-                                    <TableCell>{game.player_style}</TableCell>
-                                    <TableCell>{game.opponent_player_name}</TableCell>
-                                    <TableCell>{game.opponent_player_style}</TableCell>
-                                    <TableCell align="center" rowSpan={game.is_doubles ? 2 : 1}>
-                                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                        {game.team_sets} - {game.opponent_sets}
-                                      </Typography>
-                                    </TableCell>
-                                    <TableCell rowSpan={game.is_doubles ? 2 : 1} sx={{ borderRight: 'none' }}>
-                                      {game.team_sets > game.opponent_sets ? (
-                                        <Chip label="勝ち" color="success" size="small" />
-                                      ) : game.team_sets < game.opponent_sets ? (
-                                        <Chip label="負け" color="error" size="small" />
-                                      ) : (
-                                        <Chip label="引分" color="default" size="small" />
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                  {game.is_doubles && (
-                                    <TableRow>
-                                      <TableCell>{game.player_name_2 || '-'}</TableCell>
-                                      <TableCell>{game.player_style_2 || '-'}</TableCell>
-                                      <TableCell>{game.opponent_player_name_2 || '-'}</TableCell>
-                                      <TableCell>{game.opponent_player_style_2 || '-'}</TableCell>
-                                    </TableRow>
-                                  )}
-                                  {game.notes && (
-                                    <TableRow>
-                                      <TableCell
-                                        colSpan={8}
-                                        sx={{
-                                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                                          borderTop: '1px dashed rgba(224, 224, 224, 1)',
-                                          fontStyle: 'italic',
-                                          borderRight: 'none'
-                                        }}
-                                      >
-                                        <Typography
-                                          variant="body2"
-                                          color="text.secondary"
-                                          sx={{
-                                            fontWeight: 500,
-                                            whiteSpace: 'pre-wrap',
-                                            wordBreak: 'break-word'
-                                          }}
-                                        >
-                                          <strong>メモ:</strong> {game.notes}
-                                        </Typography>
-                                      </TableCell>
-                                    </TableRow>
-                                  )}
-                                </React.Fragment>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      ) : (
-                        <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                          この試合の詳細な試合結果はまだ登録されていません
+                      {/* チーム名とスコア */}
+                      <Box sx={{ textAlign: 'center', mb: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                          {matchResult.player_team_name} vs {matchResult.opponent_team_name}
                         </Typography>
-                      )}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+                          <Chip
+                            label={matchResult.player_team_sets}
+                            color={matchResult.player_team_sets > matchResult.opponent_sets ? 'success' : 'default'}
+                            sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+                          />
+                          <Typography variant="h6">-</Typography>
+                          <Chip
+                            label={matchResult.opponent_sets}
+                            color={matchResult.opponent_sets > matchResult.player_team_sets ? 'error' : 'default'}
+                            sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+                          />
+                        </Box>
+                        <Box sx={{ mt: 1 }}>
+                          {getResultChip(matchResult.player_team_sets, matchResult.opponent_sets)}
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ mb: 2 }} />
+
+                      {/* 個人戦の結果 */}
+                      <Stack spacing={2}>
+                        {matchResult.match_games?.map((game) => (
+                          <Card key={game.id} variant="outlined" sx={{ backgroundColor: '#fafafa' }}>
+                            <CardContent sx={{ py: 2 }}>
+                              <Typography variant="subtitle2" sx={{ textAlign: 'center', mb: 2, fontWeight: 'bold' }}>
+                                第{game.game_no}試合 ({game.is_doubles ? 'ダブルス' : 'シングルス'})
+                              </Typography>
+
+                              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 2 }}>
+                                {/* 左側: 自チーム選手情報 */}
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    {game.player_name}
+                                    {game.is_doubles && game.player_name_2 && (
+                                      <>
+                                        <br />
+                                        {game.player_name_2}
+                                      </>
+                                    )}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {game.player_style}
+                                    {game.is_doubles && game.player_style_2 && (
+                                      <>
+                                        <br />
+                                        {game.player_style_2}
+                                      </>
+                                    )}
+                                  </Typography>
+                                </Box>
+
+                                {/* 中央: スコア */}
+                                <Box sx={{ textAlign: 'center', px: 2 }}>
+                                  <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    {game.team_sets} - {game.opponent_sets}
+                                  </Typography>
+                                  {getResultChip(game.team_sets, game.opponent_sets)}
+                                </Box>
+
+                                {/* 右側: 相手チーム選手情報 */}
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    {game.opponent_player_name}
+                                    {game.is_doubles && game.opponent_player_name_2 && (
+                                      <>
+                                        <br />
+                                        {game.opponent_player_name_2}
+                                      </>
+                                    )}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {game.opponent_player_style}
+                                    {game.is_doubles && game.opponent_player_style_2 && (
+                                      <>
+                                        <br />
+                                        {game.opponent_player_style_2}
+                                      </>
+                                    )}
+                                  </Typography>
+                                </Box>
+                              </Box>
+
+                              {/* メモがある場合 */}
+                              {game.notes && (
+                                <Box sx={{ mt: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word'
+                                    }}
+                                  >
+                                    <strong>メモ:</strong> {game.notes}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Stack>
                     </CardContent>
                   </Card>
                 ))}

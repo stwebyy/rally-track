@@ -100,11 +100,14 @@ export default function NewEvent() {
 
   const handleAddMatchResult = () => {
     const newGameNo = matchResults.length + 1;
+    // 試合1の自チーム名を取得（存在する場合）
+    const firstMatchPlayerTeamName = matchResults.length > 0 ? matchResults[0].player_team_name : '';
+
     setMatchResults([
       ...matchResults,
       {
         game_no: newGameNo,
-        player_team_name: '',
+        player_team_name: firstMatchPlayerTeamName,
         opponent_team_name: '',
         player_team_sets: 0,
         opponent_sets: 0,
@@ -444,28 +447,18 @@ export default function NewEvent() {
                         size="small"
                         variant="outlined"
                       >
-                        試合を追加
+                        個人戦を追加
                       </Button>
                     </Box>
 
                     {match.match_games.map((game, gameIndex) => (
                       <Card key={gameIndex} variant="outlined" sx={{ mb: 2 }}>
                         <CardContent sx={{ py: 2 }}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                            <Typography variant="subtitle2">
-                              第{game.game_no}試合
-                            </Typography>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <FormControl>
-                                <RadioGroup
-                                  row
-                                  value={game.is_doubles ? 'doubles' : 'singles'}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'is_doubles', e.target.value === 'doubles')}
-                                >
-                                  <FormControlLabel value="singles" control={<Radio />} label="シングルス" />
-                                  <FormControlLabel value="doubles" control={<Radio />} label="ダブルス" />
-                                </RadioGroup>
-                              </FormControl>
+                          <Box mb={2}>
+                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                              <Typography variant="subtitle2">
+                                第{game.game_no}試合
+                              </Typography>
                               {match.match_games.length > 1 && (
                                 <IconButton
                                   onClick={() => handleRemoveGame(index, gameIndex)}
@@ -476,13 +469,23 @@ export default function NewEvent() {
                                 </IconButton>
                               )}
                             </Box>
+                            <FormControl>
+                              <RadioGroup
+                                row
+                                value={game.is_doubles ? 'doubles' : 'singles'}
+                                onChange={(e) => handleGameChange(index, gameIndex, 'is_doubles', e.target.value === 'doubles')}
+                              >
+                                <FormControlLabel value="singles" control={<Radio />} label="シングルス" />
+                                <FormControlLabel value="doubles" control={<Radio />} label="ダブルス" />
+                              </RadioGroup>
+                            </FormControl>
                           </Box>
 
                           <Stack spacing={2}>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                               {game.is_doubles ? 'ペア情報' : '選手情報'}
                             </Typography>
-                            <Box display="flex" gap={2}>
+                            <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
                               <TextField
                                 label={game.is_doubles ? '選手1人目の名前' : '選手名'}
                                 required
@@ -509,7 +512,7 @@ export default function NewEvent() {
                             </Box>
 
                             {game.is_doubles && (
-                              <Box display="flex" gap={2}>
+                              <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
                                 <TextField
                                   label="選手2人目の名前"
                                   required
@@ -539,7 +542,7 @@ export default function NewEvent() {
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                               {game.is_doubles ? '相手ペア情報' : '相手選手情報'}
                             </Typography>
-                            <Box display="flex" gap={2}>
+                            <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
                               <TextField
                                 label={game.is_doubles ? '相手選手1人目の名前' : '相手選手名'}
                                 required
@@ -566,7 +569,7 @@ export default function NewEvent() {
                             </Box>
 
                             {game.is_doubles && (
-                              <Box display="flex" gap={2}>
+                              <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
                                 <TextField
                                   label="相手選手2人目の名前"
                                   required

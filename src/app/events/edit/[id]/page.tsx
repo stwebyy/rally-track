@@ -122,12 +122,15 @@ export default function EditEvent() {
 
   const handleAddMatchResult = () => {
     const newGameNo = matchResults.length + 1;
+    // 試合1の自チーム名を取得（存在する場合）
+    const firstMatchPlayerTeamName = matchResults.length > 0 ? matchResults[0].player_team_name : '';
+    
     setMatchResults([
       ...matchResults,
       {
         event_id: parseInt(eventId),
         game_no: newGameNo,
-        player_team_name: '',
+        player_team_name: firstMatchPlayerTeamName,
         opponent_team_name: '',
         player_team_sets: 0,
         opponent_sets: 0,
@@ -532,7 +535,7 @@ export default function EditEvent() {
                           variant="outlined"
                           disabled={saving}
                         >
-                          試合を追加
+                          個人戦を追加
                         </Button>
                       </Box>
 

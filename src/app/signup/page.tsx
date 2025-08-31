@@ -199,6 +199,24 @@ export default function SignUp() {
           // The profile can be created later if needed
         }
 
+        // Create member record in the harataku_members table
+        const { error: memberError } = await supabase
+          .from('harataku_members')
+          .insert([
+            {
+              name: name,
+              auth_id: authData.user.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+
+        if (memberError) {
+          console.error('Member creation error:', memberError);
+          // Don't throw here as the user account was created successfully
+          // The member record can be created later if needed
+        }
+
         if (authData.user.email_confirmed_at) {
           // User is immediately confirmed, redirect to dashboard
           router.push('/');
@@ -288,7 +306,7 @@ export default function SignUp() {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="name">表示名</FormLabel>
+              <FormLabel htmlFor="name">お名前</FormLabel>
               <TextField
                 autoComplete="name"
                 name="name"

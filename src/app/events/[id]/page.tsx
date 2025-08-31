@@ -98,10 +98,14 @@ export default function EventDetail() {
           *,
           match_results (
             *,
-            match_games (*)
+            match_games (
+              *,
+              player:harataku_members!player_name_id(*),
+              player_2:harataku_members!player_name_2_id(*)
+            )
           )
         `)
-        .eq('id', eventId)
+        .eq('id', parseInt(eventId))
         .single();
 
       if (eventError) {

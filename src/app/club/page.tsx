@@ -19,19 +19,19 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { createClient } from '@/utils/supabase/client';
-import { EventWithMatchResults } from '@/types/event';
+import { MatchResultWithGameResults } from '@/types/club';
 import { PageLayout, SearchField } from '@/components';
 
-export default function Events() {
+export default function ClubMatchResults() {
   const router = useRouter();
 
-  const [events, setEvents] = React.useState<EventWithMatchResults[]>([]);
+  const [matchResults, setMatchResults] = React.useState<MatchResultWithGameResults[]>([]);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sortModel, setSortModel] = React.useState<GridSortModel>([{ field: 'date', sort: 'desc' }]);
   const [filterModel, setFilterModel] = React.useState<GridFilterModel>({ items: [] });
   const [searchText, setSearchText] = React.useState('');
-  const [filteredEvents, setFilteredEvents] = React.useState<EventWithMatchResults[]>([]);
+  const [filteredResults, setFilteredResults] = React.useState<MatchResultWithGameResults[]>([]);
   const [isClient, setIsClient] = React.useState(false);
   const supabase = createClient();
 
@@ -45,27 +45,30 @@ export default function Events() {
     setIsDataLoading(true);
     setError(null);
     try {
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
+      const { data: matchResultsData, error: matchResultsError } = await supabase
+        .from('harataku_match_results')
         .select(`
           *,
-          match_results (
+          harataku_game_results (
             *,
-            match_games (
-              *,
-              player:harataku_members!player_name_id(*),
-              player_2:harataku_members!player_name_2_id(*)
-            )
+            player:harataku_members!player_id(*),
+            opponent:harataku_members!opponent_id(*)
           )
         `)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (eventsError) {
-        throw eventsError;
+      if (matchResultsError) {
+        throw matchResultsError;
       }
 
-      setEvents(eventsData || []);
+      // データ構造を調整
+      const formattedData = (matchResultsData || []).map(result => ({
+        ...result,
+        game_results: result.harataku_game_results || []
+      }));
+
+      setMatchResults(formattedData);
     } catch (error) {
       console.error('Error loading data:', error);
       setError((error as Error).message);
@@ -78,19 +81,18 @@ export default function Events() {
     loadData();
   }, [loadData]);
 
-  // Filter events based on search text
+  // Filter match results based on search text
   React.useEffect(() => {
     if (!searchText.trim()) {
-      setFilteredEvents(events);
+      setFilteredResults(matchResults);
     } else {
-      const filtered = events.filter(event =>
-        event.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        event.location?.toLowerCase().includes(searchText.toLowerCase()) ||
-        event.date.includes(searchText)
+      const filtered = matchResults.filter(result =>
+        result.location?.toLowerCase().includes(searchText.toLowerCase()) ||
+        result.date.includes(searchText)
       );
-      setFilteredEvents(filtered);
+      setFilteredResults(filtered);
     }
-  }, [events, searchText]);
+  }, [matchResults, searchText]);
 
   const handleRefresh = () => {
     if (!isDataLoading) {
@@ -99,24 +101,24 @@ export default function Events() {
   };
 
   const handleCreateClick = () => {
-    router.push('/events/new');
+    router.push('/club/new');
   };
 
-  const handleRowClick = (params: { row: EventWithMatchResults }) => {
-    router.push(`/events/${params.row.id}`);
+  const handleRowClick = (params: { row: MatchResultWithGameResults }) => {
+    router.push(`/club/${params.row.id}`);
   };
 
-  const handleRowEdit = React.useCallback((event: EventWithMatchResults) => () => {
-    router.push(`/events/edit/${event.id}`);
+  const handleRowEdit = React.useCallback((result: MatchResultWithGameResults) => () => {
+    router.push(`/club/edit/${result.id}`);
   }, [router]);
 
-  const handleRowDelete = React.useCallback((event: EventWithMatchResults) => async () => {
-    if (window.confirm(`「${event.name}」を削除しますか？`)) {
+  const handleRowDelete = React.useCallback((result: MatchResultWithGameResults) => async () => {
+    if (window.confirm(`${result.date}の部内試合結果を削除しますか？`)) {
       try {
         const { error } = await supabase
-          .from('events')
+          .from('harataku_match_results')
           .delete()
-          .eq('id', event.id);
+          .eq('id', result.id);
 
         if (error) {
           throw error;
@@ -124,7 +126,7 @@ export default function Events() {
 
         await loadData();
       } catch (error) {
-        console.error('Error deleting event:', error);
+        console.error('Error deleting match result:', error);
         alert('削除に失敗しました');
       }
     }
@@ -144,16 +146,18 @@ export default function Events() {
         },
       },
       {
-        field: 'name',
-        headerName: '試合名',
+        field: 'location',
+        headerName: '場所',
         width: 150,
         minWidth: 150,
       },
       {
-        field: 'location',
-        headerName: '試合場所',
+        field: 'game_count',
+        headerName: '部内試合数',
         width: 120,
-        minWidth: 100,
+        valueGetter: (value, row) => {
+          return row.game_results?.length || 0;
+        },
       },
       {
         field: 'actions',
@@ -164,7 +168,7 @@ export default function Events() {
         hideable: false,
         resizable: false,
         flex: 1,
-        getActions: ({ row }: { row: EventWithMatchResults }) => [
+        getActions: ({ row }: { row: MatchResultWithGameResults }) => [
           <GridActionsCellItem
             key="edit-item"
             icon={<EditIcon />}
@@ -184,11 +188,11 @@ export default function Events() {
   );
 
   return (
-    <PageLayout title="試合結果">
+    <PageLayout title="原卓会部内試合結果">
       {/* Page header with actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          試合結果
+          原卓会部内試合結果
         </Typography>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Tooltip title="データを再読み込み" placement="left" enterDelay={1000}>
@@ -217,7 +221,7 @@ export default function Events() {
       <SearchField
         value={searchText}
         onChange={setSearchText}
-        placeholder="試合名、場所、日付で検索..."
+        placeholder="場所、日付で検索..."
       />
 
       {/* Data Grid */}
@@ -235,7 +239,7 @@ export default function Events() {
           </Alert>
         ) : isClient ? (
           <DataGrid
-            rows={filteredEvents}
+            rows={filteredResults}
             columns={columns}
             loading={isDataLoading}
             onRowClick={handleRowClick}

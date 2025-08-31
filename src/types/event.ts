@@ -11,13 +11,15 @@ export interface MatchGame {
   id?: number;
   match_result_id?: number;
   game_no: number;
-  player_name: string;
+  player_name: string; // For display
+  player_name_id?: number; // For database
   player_style: string;
   opponent_player_name: string;
   opponent_player_style: string;
   team_sets: number;
   opponent_sets: number;
   player_name_2?: string;
+  player_name_2_id?: number;
   player_style_2?: string;
   opponent_player_name_2?: string;
   opponent_player_style_2?: string;

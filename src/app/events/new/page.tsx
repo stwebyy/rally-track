@@ -36,6 +36,7 @@ import PageLayout from '@/components/molescules/PageLayout';
 interface MatchGame {
   game_no: number;
   player_name: string;
+  player_name_id?: number;
   player_style: string;
   opponent_player_name: string;
   opponent_player_style: string;
@@ -43,6 +44,7 @@ interface MatchGame {
   opponent_sets: number;
   is_doubles: boolean;
   player_name_2?: string;
+  player_name_2_id?: number;
   player_style_2?: string;
   opponent_player_name_2?: string;
   opponent_player_style_2?: string;
@@ -96,7 +98,31 @@ export default function NewEvent() {
     },
   ]);
 
+  // Members state for dropdowns
+  const [members, setMembers] = React.useState<Array<{id: number, name: string}>>([]);
+
   const supabase = createClient();
+
+  // Load members data
+  React.useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const { data: membersData, error: membersError } = await supabase
+          .from('harataku_members')
+          .select('id, name')
+          .order('name');
+
+        if (membersError) {
+          throw membersError;
+        }
+        setMembers(membersData || []);
+      } catch (error) {
+        console.error('Error loading members:', error);
+      }
+    };
+
+    loadMembers();
+  }, [supabase]);
 
   const handleAddMatchResult = () => {
     const newGameNo = matchResults.length + 1;
@@ -176,10 +202,28 @@ export default function NewEvent() {
 
   const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number | boolean) => {
     const updatedResults = [...matchResults];
-    updatedResults[matchIndex].match_games[gameIndex] = {
-      ...updatedResults[matchIndex].match_games[gameIndex],
-      [field]: value,
-    };
+
+    // Handle player name selection to include ID
+    if (field === 'player_name' && typeof value === 'string') {
+      const selectedMember = members.find(m => m.name === value);
+      updatedResults[matchIndex].match_games[gameIndex] = {
+        ...updatedResults[matchIndex].match_games[gameIndex],
+        player_name: value,
+        player_name_id: selectedMember?.id,
+      };
+    } else if (field === 'player_name_2' && typeof value === 'string') {
+      const selectedMember = members.find(m => m.name === value);
+      updatedResults[matchIndex].match_games[gameIndex] = {
+        ...updatedResults[matchIndex].match_games[gameIndex],
+        player_name_2: value,
+        player_name_2_id: selectedMember?.id,
+      };
+    } else {
+      updatedResults[matchIndex].match_games[gameIndex] = {
+        ...updatedResults[matchIndex].match_games[gameIndex],
+        [field]: value,
+      };
+    }
 
     const teamWins = updatedResults[matchIndex].match_games.filter(game => game.team_sets > game.opponent_sets).length;
     const opponentWins = updatedResults[matchIndex].match_games.filter(game => game.team_sets < game.opponent_sets).length;
@@ -209,8 +253,16 @@ export default function NewEvent() {
 
       for (let j = 0; j < match.match_games.length; j++) {
         const game = match.match_games[j];
-        if (!game.player_name.trim() || !game.opponent_player_name.trim()) {
+        if (!game.player_name.trim() || !game.player_name_id) {
           setError(`試合 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
+          return false;
+        }
+        if (!game.opponent_player_name.trim()) {
+          setError(`試合 ${match.game_no} の ${j + 1}試合目: 相手選手名は必須です。`);
+          return false;
+        }
+        if (game.is_doubles && (!game.player_name_2?.trim() || !game.player_name_2_id)) {
+          setError(`試合 ${match.game_no} の ${j + 1}試合目: ダブルス2人目の選手名は必須です。`);
           return false;
         }
       }
@@ -263,15 +315,13 @@ export default function NewEvent() {
           const gamesToInsert = match.match_games.map(game => ({
             match_result_id: matchResultData.id,
             game_no: game.game_no,
-            player_name: game.player_name.trim(),
-            player_style: game.player_style,
+            player_name_id: game.player_name_id,
             opponent_player_name: game.opponent_player_name.trim(),
             opponent_player_style: game.opponent_player_style,
             team_sets: game.team_sets,
             opponent_sets: game.opponent_sets,
             is_doubles: game.is_doubles,
-            player_name_2: game.player_name_2?.trim() || null,
-            player_style_2: game.player_style_2 || null,
+            player_name_2_id: game.player_name_2_id || null,
             opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
             opponent_player_style_2: game.opponent_player_style_2 || null,
             notes: game.notes?.trim() || null,
@@ -486,14 +536,21 @@ export default function NewEvent() {
                               {game.is_doubles ? 'ペア情報' : '選手情報'}
                             </Typography>
                             <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
-                              <TextField
-                                label={game.is_doubles ? '選手1人目の名前' : '選手名'}
-                                required
-                                fullWidth
-                                value={game.player_name}
-                                onChange={(e) => handleGameChange(index, gameIndex, 'player_name', e.target.value)}
-                                placeholder="例：田中太郎"
-                              />
+                              <FormControl fullWidth required>
+                                <InputLabel>{game.is_doubles ? '選手1人目の名前' : '選手名'}</InputLabel>
+                                <Select
+                                  value={game.player_name}
+                                  onChange={(e) => handleGameChange(index, gameIndex, 'player_name', e.target.value)}
+                                  label={game.is_doubles ? '選手1人目の名前' : '選手名'}
+                                >
+                                  <MenuItem value="">選手を選択</MenuItem>
+                                  {members.map((member) => (
+                                    <MenuItem key={member.id} value={member.name}>
+                                      {member.name}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
                               <FormControl fullWidth>
                                 <InputLabel>{game.is_doubles ? '選手1人目の戦型' : '戦型'}</InputLabel>
                                 <Select
@@ -513,14 +570,21 @@ export default function NewEvent() {
 
                             {game.is_doubles && (
                               <Box display="flex" gap={2} sx={{ flexDirection: { xs: 'column', sm: 'row' } }}>
-                                <TextField
-                                  label="選手2人目の名前"
-                                  required
-                                  fullWidth
-                                  value={game.player_name_2 || ''}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'player_name_2', e.target.value)}
-                                  placeholder="例：山田花子"
-                                />
+                                <FormControl fullWidth required>
+                                  <InputLabel>選手2人目の名前</InputLabel>
+                                  <Select
+                                    value={game.player_name_2 || ''}
+                                    onChange={(e) => handleGameChange(index, gameIndex, 'player_name_2', e.target.value)}
+                                    label="選手2人目の名前"
+                                  >
+                                    <MenuItem value="">選手を選択</MenuItem>
+                                    {members.map((member) => (
+                                      <MenuItem key={member.id} value={member.name}>
+                                        {member.name}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
                                 <FormControl fullWidth>
                                   <InputLabel>選手2人目の戦型</InputLabel>
                                   <Select

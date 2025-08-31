@@ -9,16 +9,26 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import SportsIcon from '@mui/icons-material/Sports';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 const DRAWER_WIDTH = 240;
 const MINI_DRAWER_WIDTH = 64;
+
+interface Member {
+  id: number;
+  name: string;
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -38,6 +48,29 @@ export default function Sidebar({
   const router = useRouter();
   const supabase = createClient();
 
+  // メンバー戦績メニューの開閉状態
+  const [memberRecordOpen, setMemberRecordOpen] = React.useState(false);
+  const [members, setMembers] = React.useState<Member[]>([]);
+
+  // メンバーデータを取得
+  React.useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const { data: membersData, error: membersError } = await supabase
+          .from('harataku_members')
+          .select('id, name')
+          .order('name');
+
+        if (membersError) throw membersError;
+        setMembers(membersData || []);
+      } catch (error) {
+        console.error('Error loading members:', error);
+      }
+    };
+
+    loadMembers();
+  }, [supabase]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/signin');
@@ -51,6 +84,13 @@ export default function Sidebar({
     }
   };
 
+  const handleMemberRecordToggle = () => {
+    if (isMobile || isExpanded) {
+      setMemberRecordOpen(!memberRecordOpen);
+    }
+    // ミニモードでは何もしない（展開してメンバーを選択してもらう）
+  };
+
   const menuItems = [
     {
       text: '試合結果',
@@ -58,14 +98,9 @@ export default function Sidebar({
       onClick: () => handleNavigation('/events'),
     },
     {
-      text: 'メールアドレス変更',
-      icon: <EmailIcon />,
-      onClick: () => handleNavigation('/auth/change-email'),
-    },
-    {
-      text: 'パスワード更新',
-      icon: <LockIcon />,
-      onClick: () => handleNavigation('/auth/update-password'),
+      text: '部内結果',
+      icon: <GroupIcon />,
+      onClick: () => handleNavigation('/club'),
     },
   ];
 
@@ -112,6 +147,105 @@ export default function Sidebar({
             </ListItemButton>
           </ListItem>
         ))}
+
+        {/* メンバー戦績メニュー */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={handleMemberRecordToggle}
+            sx={{
+              minHeight: 48,
+              justifyContent: (isMobile || isExpanded) ? 'initial' : 'center',
+              px: 2.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: (isMobile || isExpanded) ? 3 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <PersonIcon />
+            </ListItemIcon>
+            {(isMobile || isExpanded) && (
+              <>
+                <ListItemText primary="メンバー戦績" />
+                {memberRecordOpen ? <ExpandLess /> : <ExpandMore />}
+              </>
+            )}
+          </ListItemButton>
+        </ListItem>
+
+        {/* サブメニュー - メンバー一覧 */}
+        {(isMobile || isExpanded) && (
+          <Collapse in={memberRecordOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {members.map((member) => (
+                <ListItem key={member.id} disablePadding>
+                  <ListItemButton
+                    onClick={() => handleNavigation(`/member_record/${member.id}`)}
+                    sx={{ pl: 4 }}
+                  >
+                    <ListItemText primary={member.name} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              {members.length === 0 && (
+                <ListItem sx={{ pl: 4 }}>
+                  <ListItemText
+                    primary="メンバーが登録されていません"
+                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                  />
+                </ListItem>
+              )}
+            </List>
+          </Collapse>
+        )}
+
+        {/* その他のメニュー */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => handleNavigation('/auth/change-email')}
+            sx={{
+              minHeight: 48,
+              justifyContent: (isMobile || isExpanded) ? 'initial' : 'center',
+              px: 2.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: (isMobile || isExpanded) ? 3 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <EmailIcon />
+            </ListItemIcon>
+            {(isMobile || isExpanded) && <ListItemText primary="メールアドレス変更" />}
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => handleNavigation('/auth/update-password')}
+            sx={{
+              minHeight: 48,
+              justifyContent: (isMobile || isExpanded) ? 'initial' : 'center',
+              px: 2.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: (isMobile || isExpanded) ? 3 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <LockIcon />
+            </ListItemIcon>
+            {(isMobile || isExpanded) && <ListItemText primary="パスワード更新" />}
+          </ListItemButton>
+        </ListItem>
       </List>
       <Box sx={{ flexGrow: 1 }} />
       <Divider />

@@ -65,7 +65,9 @@ export default function EditEvent() {
 
       setEvent(eventData);
       setEventName(eventData.name);
-      setEventDate(eventData.date);
+      // 日付をYYYY-MM-DD形式に変換
+      const formattedDate = eventData.date ? new Date(eventData.date).toISOString().split('T')[0] : '';
+      setEventDate(formattedDate);
       setEventLocation(eventData.location || '');
 
       // Load match results with their games
@@ -83,7 +85,6 @@ export default function EditEvent() {
       if (matchData && matchData.length > 0) {
         setMatchResults(matchData.map(match => ({
           ...match,
-          notes: match.notes || '',
           match_games: match.match_games || [],
         })));
       } else {
@@ -95,7 +96,6 @@ export default function EditEvent() {
           opponent_team_name: '',
           player_team_sets: 0,
           opponent_sets: 0,
-          notes: '',
           match_games: [{
             game_no: 1,
             player_name: '',
@@ -104,6 +104,7 @@ export default function EditEvent() {
             opponent_player_style: '',
             team_sets: 0,
             opponent_sets: 0,
+            is_doubles: false,
           }],
         }]);
       }
@@ -130,7 +131,6 @@ export default function EditEvent() {
         opponent_team_name: '',
         player_team_sets: 0,
         opponent_sets: 0,
-        notes: '',
         match_games: [{
           game_no: 1,
           player_name: '',
@@ -139,6 +139,7 @@ export default function EditEvent() {
           opponent_player_style: '',
           team_sets: 0,
           opponent_sets: 0,
+          is_doubles: false,
         }],
       },
     ]);
@@ -178,6 +179,7 @@ export default function EditEvent() {
       opponent_player_style: '',
       team_sets: 0,
       opponent_sets: 0,
+      is_doubles: false,
     });
     setMatchResults(updatedResults);
   };
@@ -193,7 +195,7 @@ export default function EditEvent() {
     }
   };
 
-  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number) => {
+  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number | boolean) => {
     const updatedResults = [...matchResults];
     updatedResults[matchIndex].match_games[gameIndex] = {
       ...updatedResults[matchIndex].match_games[gameIndex],
@@ -286,7 +288,6 @@ export default function EditEvent() {
               opponent_team_name: match.opponent_team_name.trim(),
               player_team_sets: match.player_team_sets,
               opponent_sets: match.opponent_sets,
-              notes: match.notes.trim() || null,
             })
             .eq('id', match.id);
 
@@ -311,6 +312,12 @@ export default function EditEvent() {
               opponent_player_style: game.opponent_player_style,
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
+              is_doubles: game.is_doubles,
+              player_name_2: game.player_name_2?.trim() || null,
+              player_style_2: game.player_style_2 || null,
+              opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
+              opponent_player_style_2: game.opponent_player_style_2 || null,
+              notes: game.notes?.trim() || null,
             }));
 
             const { error: insertGamesError } = await supabase
@@ -330,7 +337,6 @@ export default function EditEvent() {
               opponent_team_name: match.opponent_team_name.trim(),
               player_team_sets: match.player_team_sets,
               opponent_sets: match.opponent_sets,
-              notes: match.notes.trim() || null,
             })
             .select()
             .single();
@@ -348,6 +354,12 @@ export default function EditEvent() {
               opponent_player_style: game.opponent_player_style,
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
+              is_doubles: game.is_doubles,
+              player_name_2: game.player_name_2?.trim() || null,
+              player_style_2: game.player_style_2 || null,
+              opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
+              opponent_player_style_2: game.opponent_player_style_2 || null,
+              notes: game.notes?.trim() || null,
             }));
 
             const { error: insertGamesError } = await supabase
@@ -535,17 +547,6 @@ export default function EditEvent() {
                         />
                       ))}
                     </Box>
-
-                    <TextField
-                      label="メモ"
-                      multiline
-                      rows={3}
-                      fullWidth
-                      value={match.notes || ''}
-                      onChange={(e) => handleMatchResultChange(index, 'notes', e.target.value)}
-                      disabled={saving}
-                      placeholder="試合の感想や特記事項など"
-                    />
 
                     <Box display="flex" justifyContent="center" sx={{ mt: 2 }}>
                       <Chip

@@ -53,6 +53,12 @@ interface MatchGame {
   opponent_player_style: string;
   team_sets: number;
   opponent_sets: number;
+  is_doubles: boolean;
+  player_name_2?: string;
+  player_style_2?: string;
+  opponent_player_name_2?: string;
+  opponent_player_style_2?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -273,52 +279,92 @@ export default function EventDetail() {
                       }
                     />
                     <CardContent>
-                      {result.notes && (
-                        <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                          備考: {result.notes}
-                        </Typography>
-                      )}
-
                       {/* Individual Games */}
                       {result.match_games && result.match_games.length > 0 ? (
                         <TableContainer component={Paper} variant="outlined">
-                          <Table size="small">
+                          <Table size="small" sx={{ '& .MuiTableCell-root': { borderRight: '1px solid rgba(224, 224, 224, 1)' } }}>
                             <TableHead>
                               <TableRow>
-                                <TableCell>試合</TableCell>
-                                <TableCell>選手名</TableCell>
-                                <TableCell>プレースタイル</TableCell>
-                                <TableCell>相手選手</TableCell>
-                                <TableCell>相手スタイル</TableCell>
-                                <TableCell align="center">セット数</TableCell>
-                                <TableCell>結果</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>試合</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>形式</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>選手名</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>プレースタイル</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>相手選手</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>相手スタイル</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 'bold' }}>セット数</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', borderRight: 'none' }}>結果</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
                               {result.match_games
                                 .sort((a, b) => a.game_no - b.game_no)
                                 .map((game) => (
-                                <TableRow key={game.id}>
-                                  <TableCell>{game.game_no}試合目</TableCell>
-                                  <TableCell>{game.player_name}</TableCell>
-                                  <TableCell>{game.player_style}</TableCell>
-                                  <TableCell>{game.opponent_player_name}</TableCell>
-                                  <TableCell>{game.opponent_player_style}</TableCell>
-                                  <TableCell align="center">
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                      {game.team_sets} - {game.opponent_sets}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    {game.team_sets > game.opponent_sets ? (
-                                      <Chip label="勝ち" color="success" size="small" />
-                                    ) : game.team_sets < game.opponent_sets ? (
-                                      <Chip label="負け" color="error" size="small" />
-                                    ) : (
-                                      <Chip label="引分" color="default" size="small" />
-                                    )}
-                                  </TableCell>
-                                </TableRow>
+                                <React.Fragment key={game.id}>
+                                  <TableRow>
+                                    <TableCell rowSpan={game.is_doubles ? 2 : 1}>
+                                      {game.game_no}試合目
+                                    </TableCell>
+                                    <TableCell rowSpan={game.is_doubles ? 2 : 1}>
+                                      <Chip
+                                        label={game.is_doubles ? 'ダブルス' : 'シングルス'}
+                                        size="small"
+                                        variant="outlined"
+                                        color={game.is_doubles ? 'secondary' : 'primary'}
+                                      />
+                                    </TableCell>
+                                    <TableCell>{game.player_name}</TableCell>
+                                    <TableCell>{game.player_style}</TableCell>
+                                    <TableCell>{game.opponent_player_name}</TableCell>
+                                    <TableCell>{game.opponent_player_style}</TableCell>
+                                    <TableCell align="center" rowSpan={game.is_doubles ? 2 : 1}>
+                                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                        {game.team_sets} - {game.opponent_sets}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell rowSpan={game.is_doubles ? 2 : 1} sx={{ borderRight: 'none' }}>
+                                      {game.team_sets > game.opponent_sets ? (
+                                        <Chip label="勝ち" color="success" size="small" />
+                                      ) : game.team_sets < game.opponent_sets ? (
+                                        <Chip label="負け" color="error" size="small" />
+                                      ) : (
+                                        <Chip label="引分" color="default" size="small" />
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                  {game.is_doubles && (
+                                    <TableRow>
+                                      <TableCell>{game.player_name_2 || '-'}</TableCell>
+                                      <TableCell>{game.player_style_2 || '-'}</TableCell>
+                                      <TableCell>{game.opponent_player_name_2 || '-'}</TableCell>
+                                      <TableCell>{game.opponent_player_style_2 || '-'}</TableCell>
+                                    </TableRow>
+                                  )}
+                                  {game.notes && (
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={8}
+                                        sx={{
+                                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                                          borderTop: '1px dashed rgba(224, 224, 224, 1)',
+                                          fontStyle: 'italic',
+                                          borderRight: 'none'
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="body2"
+                                          color="text.secondary"
+                                          sx={{
+                                            fontWeight: 500,
+                                            whiteSpace: 'pre-wrap',
+                                            wordBreak: 'break-word'
+                                          }}
+                                        >
+                                          <strong>メモ:</strong> {game.notes}
+                                        </Typography>
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </React.Fragment>
                               ))}
                             </TableBody>
                           </Table>

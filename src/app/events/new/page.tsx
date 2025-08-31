@@ -19,6 +19,9 @@ import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import RadioGroup from '@mui/material/RadioGroup';
+import Radio from '@mui/material/Radio';
 
 // Icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -38,6 +41,12 @@ interface MatchGame {
   opponent_player_style: string;
   team_sets: number;
   opponent_sets: number;
+  is_doubles: boolean;
+  player_name_2?: string;
+  player_style_2?: string;
+  opponent_player_name_2?: string;
+  opponent_player_style_2?: string;
+  notes?: string;
 }
 
 interface MatchResult {
@@ -47,7 +56,6 @@ interface MatchResult {
   opponent_team_name: string;
   player_team_sets: number;
   opponent_sets: number;
-  notes: string;
   match_games: MatchGame[];
 }
 
@@ -59,7 +67,10 @@ export default function NewEvent() {
 
   // Event fields
   const [eventName, setEventName] = React.useState('');
-  const [eventDate, setEventDate] = React.useState('');
+  const [eventDate, setEventDate] = React.useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  });
   const [eventLocation, setEventLocation] = React.useState('');
 
   // Match results
@@ -70,7 +81,6 @@ export default function NewEvent() {
       opponent_team_name: '',
       player_team_sets: 0,
       opponent_sets: 0,
-      notes: '',
       match_games: [
         {
           game_no: 1,
@@ -80,6 +90,7 @@ export default function NewEvent() {
           opponent_player_style: '',
           team_sets: 0,
           opponent_sets: 0,
+          is_doubles: false,
         },
       ],
     },
@@ -97,7 +108,6 @@ export default function NewEvent() {
         opponent_team_name: '',
         player_team_sets: 0,
         opponent_sets: 0,
-        notes: '',
         match_games: [
           {
             game_no: 1,
@@ -107,6 +117,7 @@ export default function NewEvent() {
             opponent_player_style: '',
             team_sets: 0,
             opponent_sets: 0,
+            is_doubles: false,
           },
         ],
       },
@@ -144,6 +155,7 @@ export default function NewEvent() {
       opponent_player_style: '',
       team_sets: 0,
       opponent_sets: 0,
+      is_doubles: false,
     });
     setMatchResults(updatedResults);
   };
@@ -159,7 +171,7 @@ export default function NewEvent() {
     }
   };
 
-  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number) => {
+  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number | boolean) => {
     const updatedResults = [...matchResults];
     updatedResults[matchIndex].match_games[gameIndex] = {
       ...updatedResults[matchIndex].match_games[gameIndex],
@@ -238,7 +250,6 @@ export default function NewEvent() {
             opponent_team_name: match.opponent_team_name.trim(),
             player_team_sets: match.player_team_sets,
             opponent_sets: match.opponent_sets,
-            notes: match.notes.trim() || null,
           })
           .select()
           .single();
@@ -255,6 +266,12 @@ export default function NewEvent() {
             opponent_player_style: game.opponent_player_style,
             team_sets: game.team_sets,
             opponent_sets: game.opponent_sets,
+            is_doubles: game.is_doubles,
+            player_name_2: game.player_name_2?.trim() || null,
+            player_style_2: game.player_style_2 || null,
+            opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
+            opponent_player_style_2: game.opponent_player_style_2 || null,
+            notes: game.notes?.trim() || null,
           }));
 
           const { error: gamesError } = await supabase
@@ -438,21 +455,36 @@ export default function NewEvent() {
                             <Typography variant="subtitle2">
                               第{game.game_no}試合
                             </Typography>
-                            {match.match_games.length > 1 && (
-                              <IconButton
-                                onClick={() => handleRemoveGame(index, gameIndex)}
-                                color="error"
-                                size="small"
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <FormControl>
+                                <RadioGroup
+                                  row
+                                  value={game.is_doubles ? 'doubles' : 'singles'}
+                                  onChange={(e) => handleGameChange(index, gameIndex, 'is_doubles', e.target.value === 'doubles')}
+                                >
+                                  <FormControlLabel value="singles" control={<Radio />} label="シングルス" />
+                                  <FormControlLabel value="doubles" control={<Radio />} label="ダブルス" />
+                                </RadioGroup>
+                              </FormControl>
+                              {match.match_games.length > 1 && (
+                                <IconButton
+                                  onClick={() => handleRemoveGame(index, gameIndex)}
+                                  color="error"
+                                  size="small"
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              )}
+                            </Box>
                           </Box>
 
                           <Stack spacing={2}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                              {game.is_doubles ? 'ペア情報' : '選手情報'}
+                            </Typography>
                             <Box display="flex" gap={2}>
                               <TextField
-                                label="選手名"
+                                label={game.is_doubles ? '選手1人目の名前' : '選手名'}
                                 required
                                 fullWidth
                                 value={game.player_name}
@@ -460,11 +492,11 @@ export default function NewEvent() {
                                 placeholder="例：田中太郎"
                               />
                               <FormControl fullWidth>
-                                <InputLabel>戦型</InputLabel>
+                                <InputLabel>{game.is_doubles ? '選手1人目の戦型' : '戦型'}</InputLabel>
                                 <Select
                                   value={game.player_style}
                                   onChange={(e) => handleGameChange(index, gameIndex, 'player_style', e.target.value)}
-                                  label="戦型"
+                                  label={game.is_doubles ? '選手1人目の戦型' : '戦型'}
                                 >
                                   <MenuItem value="">戦型（任意項目）</MenuItem>
                                   {PLAYER_STYLES.map((style) => (
@@ -475,6 +507,91 @@ export default function NewEvent() {
                                 </Select>
                               </FormControl>
                             </Box>
+
+                            {game.is_doubles && (
+                              <Box display="flex" gap={2}>
+                                <TextField
+                                  label="選手2人目の名前"
+                                  required
+                                  fullWidth
+                                  value={game.player_name_2 || ''}
+                                  onChange={(e) => handleGameChange(index, gameIndex, 'player_name_2', e.target.value)}
+                                  placeholder="例：山田花子"
+                                />
+                                <FormControl fullWidth>
+                                  <InputLabel>選手2人目の戦型</InputLabel>
+                                  <Select
+                                    value={game.player_style_2 || ''}
+                                    onChange={(e) => handleGameChange(index, gameIndex, 'player_style_2', e.target.value)}
+                                    label="選手2人目の戦型"
+                                  >
+                                    <MenuItem value="">戦型（任意項目）</MenuItem>
+                                    {PLAYER_STYLES.map((style) => (
+                                      <MenuItem key={style} value={style}>
+                                        {style}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </Box>
+                            )}
+
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                              {game.is_doubles ? '相手ペア情報' : '相手選手情報'}
+                            </Typography>
+                            <Box display="flex" gap={2}>
+                              <TextField
+                                label={game.is_doubles ? '相手選手1人目の名前' : '相手選手名'}
+                                required
+                                fullWidth
+                                value={game.opponent_player_name}
+                                onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name', e.target.value)}
+                                placeholder="例：佐藤花子"
+                              />
+                              <FormControl fullWidth>
+                                <InputLabel>{game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}</InputLabel>
+                                <Select
+                                  value={game.opponent_player_style}
+                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style', e.target.value)}
+                                  label={game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}
+                                >
+                                  <MenuItem value="">戦型（任意項目）</MenuItem>
+                                  {PLAYER_STYLES.map((style) => (
+                                    <MenuItem key={style} value={style}>
+                                      {style}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Box>
+
+                            {game.is_doubles && (
+                              <Box display="flex" gap={2}>
+                                <TextField
+                                  label="相手選手2人目の名前"
+                                  required
+                                  fullWidth
+                                  value={game.opponent_player_name_2 || ''}
+                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name_2', e.target.value)}
+                                  placeholder="例：鈴木一郎"
+                                />
+                                <FormControl fullWidth>
+                                  <InputLabel>相手選手2人目の戦型</InputLabel>
+                                  <Select
+                                    value={game.opponent_player_style_2 || ''}
+                                    onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style_2', e.target.value)}
+                                    label="相手選手2人目の戦型"
+                                  >
+                                    <MenuItem value="">戦型（任意項目）</MenuItem>
+                                    {PLAYER_STYLES.map((style) => (
+                                      <MenuItem key={style} value={style}>
+                                        {style}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </Box>
+                            )}
 
                             <Box display="flex" gap={2} alignItems="center" justifyContent="center">
                               <TextField
@@ -498,32 +615,6 @@ export default function NewEvent() {
                               />
                             </Box>
 
-                            <Box display="flex" gap={2}>
-                              <TextField
-                                label="相手選手名"
-                                required
-                                fullWidth
-                                value={game.opponent_player_name}
-                                onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name', e.target.value)}
-                                placeholder="例：佐藤花子"
-                              />
-                              <FormControl fullWidth>
-                                <InputLabel>相手戦型</InputLabel>
-                                <Select
-                                  value={game.opponent_player_style}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style', e.target.value)}
-                                  label="相手戦型"
-                                >
-                                  <MenuItem value="">戦型（任意項目）</MenuItem>
-                                  {PLAYER_STYLES.map((style) => (
-                                    <MenuItem key={style} value={style}>
-                                      {style}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                            </Box>
-
                             <Box display="flex" justifyContent="center">
                               <Chip
                                 label={
@@ -545,21 +636,22 @@ export default function NewEvent() {
                                 size="small"
                               />
                             </Box>
+
+                            <TextField
+                              label="メモ"
+                              multiline
+                              rows={3}
+                              fullWidth
+                              value={game.notes || ''}
+                              onChange={(e) => handleGameChange(index, gameIndex, 'notes', e.target.value)}
+                              placeholder="試合の詳細や反省点などをメモできます"
+                              sx={{ mt: 2 }}
+                            />
                           </Stack>
                         </CardContent>
                       </Card>
                     ))}
                   </Box>
-
-                  <TextField
-                    label="メモ"
-                    multiline
-                    rows={3}
-                    fullWidth
-                    value={match.notes}
-                    onChange={(e) => handleMatchResultChange(index, 'notes', e.target.value)}
-                    placeholder="試合の感想や特記事項など"
-                  />
 
                   <Box display="flex" justifyContent="center" sx={{ mt: 2 }}>
                     <Chip

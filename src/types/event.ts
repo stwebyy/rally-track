@@ -17,6 +17,12 @@ export interface MatchGame {
   opponent_player_style: string;
   team_sets: number;
   opponent_sets: number;
+  player_name_2?: string;
+  player_style_2?: string;
+  opponent_player_name_2?: string;
+  opponent_player_style_2?: string;
+  is_doubles: boolean;
+  notes?: string;
 }
 
 export interface MatchResult {
@@ -27,7 +33,6 @@ export interface MatchResult {
   opponent_team_name: string;
   player_team_sets: number;
   opponent_sets: number;
-  notes: string;
   match_games: MatchGame[];
   created_at?: string;
   updated_at?: string;

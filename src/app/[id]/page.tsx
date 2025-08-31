@@ -474,7 +474,6 @@ export default function EventDetail() {
                       <TableCell>相手選手</TableCell>
                       <TableCell>相手スタイル</TableCell>
                       <TableCell align="center">セット数</TableCell>
-                      <TableCell>備考</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -493,13 +492,6 @@ export default function EventDetail() {
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                             {result.team_sets} - {result.opponent_sets}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {result.notes && (
-                            <Typography variant="body2" sx={{ maxWidth: 200, wordBreak: 'break-word' }}>
-                              {result.notes}
-                            </Typography>
-                          )}
                         </TableCell>
                       </TableRow>
                     ))}

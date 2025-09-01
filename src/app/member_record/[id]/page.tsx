@@ -357,7 +357,7 @@ export default function MemberRecord() {
                 総試合数
               </Typography>
               <Typography variant="body2" fontWeight="bold">
-                {calculateTabStats.totalGames}試合
+                {calculateTabStats.totalGames}
               </Typography>
             </Box>
             <Box>

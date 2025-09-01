@@ -357,7 +357,7 @@ export default function MemberRecord() {
                 総試合数
               </Typography>
               <Typography variant="body2" fontWeight="bold">
-                {calculateTabStats.totalGames}
+                {calculateTabStats.totalGames}試合
               </Typography>
             </Box>
             <Box>
@@ -376,14 +376,14 @@ export default function MemberRecord() {
                 {calculateTabStats.winRate}%
               </Typography>
             </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                合計セット数
-              </Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {calculateTabStats.totalTeamSets} - {calculateTabStats.totalOpponentSets}
-              </Typography>
-            </Box>
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              合計セット数
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              {calculateTabStats.totalTeamSets} - {calculateTabStats.totalOpponentSets}
+            </Typography>
           </Box>
         </CardContent>
       </Card>

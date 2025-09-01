@@ -393,7 +393,7 @@ export default function MemberRecord() {
           {currentTab === 0 ? '部内試合記録がありません。' : '部外試合記録がありません。'}
         </Alert>
       ) : (
-        <Stack spacing={2}>
+        <Stack spacing={2} sx={{ mb: { xs: 4, md: 2 } }}>
           {currentStats.map((stats: OpponentStats, index: number) => {
             const panelId = `${currentTab}-${stats.opponent_name}`;
             return (

@@ -62,6 +62,7 @@ export default function PageLayout({
         sx={{
           flexGrow: 1,
           p: 3,
+          pb: { xs: 6, md: 3 }, // スマホでは下部に追加のパディング
           width: {
             xs: '100%',
             md: `calc(100% - ${isDesktopSidebarExpanded ? DRAWER_WIDTH : MINI_DRAWER_WIDTH}px)`
@@ -71,6 +72,8 @@ export default function PageLayout({
             duration: theme.transitions.duration.enteringScreen,
           }),
           backgroundColor: 'background.default',
+          minHeight: '100vh', // 最小高さを画面高さに設定
+          boxSizing: 'border-box',
         }}
       >
         <Toolbar />

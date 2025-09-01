@@ -20,12 +20,18 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { MatchGame } from '@/types/event';
 import { PLAYER_STYLES } from '@/types/constants';
 
+interface Member {
+  id: number;
+  name: string;
+}
+
 interface MatchGameFormProps {
   game: MatchGame;
   totalGames: number;
   onGameChange: (field: keyof MatchGame, value: string | number | boolean) => void;
   onRemoveGame?: () => void;
   disabled?: boolean;
+  members?: Member[];
 }
 
 export default function MatchGameForm({
@@ -34,6 +40,7 @@ export default function MatchGameForm({
   onGameChange,
   onRemoveGame,
   disabled = false,
+  members = [],
 }: MatchGameFormProps) {
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
@@ -71,27 +78,18 @@ export default function MatchGameForm({
             {game.is_doubles ? 'ペア情報' : '選手情報'}
           </Typography>
           <Box display="flex" gap={2}>
-            <TextField
-              label={game.is_doubles ? '選手1人目の名前' : '選手名'}
-              required
-              fullWidth
-              value={game.player_name}
-              onChange={(e) => onGameChange('player_name', e.target.value)}
-              disabled={disabled}
-              placeholder="例：田中太郎"
-            />
-            <FormControl fullWidth>
-              <InputLabel>{game.is_doubles ? '選手1人目の戦型' : '戦型'}</InputLabel>
+            <FormControl fullWidth required>
+              <InputLabel>{game.is_doubles ? '選手1人目の名前' : '選手名'}</InputLabel>
               <Select
-                value={game.player_style}
-                onChange={(e) => onGameChange('player_style', e.target.value)}
-                label={game.is_doubles ? '選手1人目の戦型' : '戦型'}
+                value={game.player_name}
+                onChange={(e) => onGameChange('player_name', e.target.value)}
+                label={game.is_doubles ? '選手1人目の名前' : '選手名'}
                 disabled={disabled}
               >
-                <MenuItem value="">戦型（任意項目）</MenuItem>
-                {PLAYER_STYLES.map((style) => (
-                  <MenuItem key={style} value={style}>
-                    {style}
+                <MenuItem value="">選手を選択</MenuItem>
+                {members.map((member) => (
+                  <MenuItem key={member.id} value={member.name}>
+                    {member.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -100,27 +98,18 @@ export default function MatchGameForm({
 
           {game.is_doubles && (
             <Box display="flex" gap={2}>
-              <TextField
-                label="選手2人目の名前"
-                required
-                fullWidth
-                value={game.player_name_2 || ''}
-                onChange={(e) => onGameChange('player_name_2', e.target.value)}
-                disabled={disabled}
-                placeholder="例：山田花子"
-              />
-              <FormControl fullWidth>
-                <InputLabel>選手2人目の戦型</InputLabel>
+              <FormControl fullWidth required>
+                <InputLabel>選手2人目の名前</InputLabel>
                 <Select
-                  value={game.player_style_2 || ''}
-                  onChange={(e) => onGameChange('player_style_2', e.target.value)}
-                  label="選手2人目の戦型"
+                  value={game.player_name_2 || ''}
+                  onChange={(e) => onGameChange('player_name_2', e.target.value)}
+                  label="選手2人目の名前"
                   disabled={disabled}
                 >
-                  <MenuItem value="">戦型（任意項目）</MenuItem>
-                  {PLAYER_STYLES.map((style) => (
-                    <MenuItem key={style} value={style}>
-                      {style}
+                  <MenuItem value="">選手を選択</MenuItem>
+                  {members.map((member) => (
+                    <MenuItem key={member.id} value={member.name}>
+                      {member.name}
                     </MenuItem>
                   ))}
                 </Select>

@@ -37,7 +37,6 @@ interface MatchGame {
   game_no: number;
   player_name: string;
   player_name_id?: number;
-  player_style: string;
   opponent_player_name: string;
   opponent_player_style: string;
   team_sets: number;
@@ -45,7 +44,6 @@ interface MatchGame {
   is_doubles: boolean;
   player_name_2?: string;
   player_name_2_id?: number;
-  player_style_2?: string;
   opponent_player_name_2?: string;
   opponent_player_style_2?: string;
   notes?: string;
@@ -87,7 +85,6 @@ export default function NewEvent() {
         {
           game_no: 1,
           player_name: '',
-          player_style: '',
           opponent_player_name: '',
           opponent_player_style: '',
           team_sets: 0,
@@ -102,6 +99,12 @@ export default function NewEvent() {
   const [members, setMembers] = React.useState<Array<{id: number, name: string}>>([]);
 
   const supabase = createClient();
+
+  // Helper function to get member ID by name
+  const getMemberIdByName = React.useCallback((name: string): number | null => {
+    const member = members.find(m => m.name === name);
+    return member ? member.id : null;
+  }, [members]);
 
   // Load members data
   React.useEffect(() => {
@@ -141,7 +144,6 @@ export default function NewEvent() {
           {
             game_no: 1,
             player_name: '',
-            player_style: '',
             opponent_player_name: '',
             opponent_player_style: '',
             team_sets: 0,
@@ -179,7 +181,6 @@ export default function NewEvent() {
     updatedResults[matchIndex].match_games.push({
       game_no: newGameNo,
       player_name: '',
-      player_style: '',
       opponent_player_name: '',
       opponent_player_style: '',
       team_sets: 0,
@@ -315,13 +316,13 @@ export default function NewEvent() {
           const gamesToInsert = match.match_games.map(game => ({
             match_result_id: matchResultData.id,
             game_no: game.game_no,
-            player_name_id: game.player_name_id,
+            player_name_id: getMemberIdByName(game.player_name),
             opponent_player_name: game.opponent_player_name.trim(),
             opponent_player_style: game.opponent_player_style,
             team_sets: game.team_sets,
             opponent_sets: game.opponent_sets,
             is_doubles: game.is_doubles,
-            player_name_2_id: game.player_name_2_id || null,
+            player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
             opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
             opponent_player_style_2: game.opponent_player_style_2 || null,
             notes: game.notes?.trim() || null,
@@ -355,9 +356,6 @@ export default function NewEvent() {
         <IconButton onClick={() => router.push('/events')} color="inherit">
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h4" component="h1">
-          新規試合結果作成
-        </Typography>
       </Box>
 
       {error && (
@@ -551,21 +549,6 @@ export default function NewEvent() {
                                   ))}
                                 </Select>
                               </FormControl>
-                              <FormControl fullWidth>
-                                <InputLabel>{game.is_doubles ? '選手1人目の戦型' : '戦型'}</InputLabel>
-                                <Select
-                                  value={game.player_style}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'player_style', e.target.value)}
-                                  label={game.is_doubles ? '選手1人目の戦型' : '戦型'}
-                                >
-                                  <MenuItem value="">戦型（任意項目）</MenuItem>
-                                  {PLAYER_STYLES.map((style) => (
-                                    <MenuItem key={style} value={style}>
-                                      {style}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
                             </Box>
 
                             {game.is_doubles && (
@@ -581,21 +564,6 @@ export default function NewEvent() {
                                     {members.map((member) => (
                                       <MenuItem key={member.id} value={member.name}>
                                         {member.name}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                                <FormControl fullWidth>
-                                  <InputLabel>選手2人目の戦型</InputLabel>
-                                  <Select
-                                    value={game.player_style_2 || ''}
-                                    onChange={(e) => handleGameChange(index, gameIndex, 'player_style_2', e.target.value)}
-                                    label="選手2人目の戦型"
-                                  >
-                                    <MenuItem value="">戦型（任意項目）</MenuItem>
-                                    {PLAYER_STYLES.map((style) => (
-                                      <MenuItem key={style} value={style}>
-                                        {style}
                                       </MenuItem>
                                     ))}
                                   </Select>

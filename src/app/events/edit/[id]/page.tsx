@@ -50,7 +50,37 @@ export default function EditEvent() {
   const [matchResults, setMatchResults] = React.useState<MatchResult[]>([]);
   const [deletedMatchIds, setDeletedMatchIds] = React.useState<number[]>([]);
 
+  // Members state for dropdowns
+  const [members, setMembers] = React.useState<Array<{id: number, name: string}>>([]);
+
   const supabase = createClient();
+
+  // Helper function to get member ID by name
+  const getMemberIdByName = React.useCallback((name: string): number | null => {
+    const member = members.find(m => m.name === name);
+    return member ? member.id : null;
+  }, [members]);
+
+  // Load members data
+  React.useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const { data: membersData, error: membersError } = await supabase
+          .from('harataku_members')
+          .select('id, name')
+          .order('name');
+
+        if (membersError) {
+          throw membersError;
+        }
+        setMembers(membersData || []);
+      } catch (error) {
+        console.error('Error loading members:', error);
+      }
+    };
+
+    loadMembers();
+  }, [supabase]);
 
   const loadEventData = React.useCallback(async () => {
     try {
@@ -75,7 +105,11 @@ export default function EditEvent() {
         .from('match_results')
         .select(`
           *,
-          match_games (*)
+          match_games (
+            *,
+            player:harataku_members!player_name_id(*),
+            player_2:harataku_members!player_name_2_id(*)
+          )
         `)
         .eq('event_id', eventId)
         .order('id');
@@ -85,7 +119,26 @@ export default function EditEvent() {
       if (matchData && matchData.length > 0) {
         setMatchResults(matchData.map(match => ({
           ...match,
-          match_games: match.match_games || [],
+          match_games: (match.match_games || []).map((game: {
+            id: number;
+            game_no: number;
+            player_name_id: number;
+            opponent_player_name: string;
+            opponent_player_style: string;
+            team_sets: number;
+            opponent_sets: number;
+            player_name_2_id?: number;
+            opponent_player_name_2?: string;
+            opponent_player_style_2?: string;
+            is_doubles: boolean;
+            notes?: string;
+            player?: { name: string };
+            player_2?: { name: string };
+          }) => ({
+            ...game,
+            player_name: game.player?.name || '',
+            player_name_2: game.player_2?.name || '',
+          })),
         })));
       } else {
         // No matches exist, add a default one
@@ -124,7 +177,7 @@ export default function EditEvent() {
     const newGameNo = matchResults.length + 1;
     // 試合1の自チーム名を取得（存在する場合）
     const firstMatchPlayerTeamName = matchResults.length > 0 ? matchResults[0].player_team_name : '';
-    
+
     setMatchResults([
       ...matchResults,
       {
@@ -309,15 +362,13 @@ export default function EditEvent() {
             const gamesToInsert = match.match_games.map(game => ({
               match_result_id: match.id,
               game_no: game.game_no,
-              player_name: game.player_name.trim(),
-              player_style: game.player_style,
+              player_name_id: getMemberIdByName(game.player_name),
               opponent_player_name: game.opponent_player_name.trim(),
               opponent_player_style: game.opponent_player_style,
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
               is_doubles: game.is_doubles,
-              player_name_2: game.player_name_2?.trim() || null,
-              player_style_2: game.player_style_2 || null,
+              player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
               opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
               opponent_player_style_2: game.opponent_player_style_2 || null,
               notes: game.notes?.trim() || null,
@@ -351,15 +402,13 @@ export default function EditEvent() {
             const gamesToInsert = match.match_games.map(game => ({
               match_result_id: newMatchData.id,
               game_no: game.game_no,
-              player_name: game.player_name.trim(),
-              player_style: game.player_style,
+              player_name_id: getMemberIdByName(game.player_name),
               opponent_player_name: game.opponent_player_name.trim(),
               opponent_player_style: game.opponent_player_style,
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
               is_doubles: game.is_doubles,
-              player_name_2: game.player_name_2?.trim() || null,
-              player_style_2: game.player_style_2 || null,
+              player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
               opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
               opponent_player_style_2: game.opponent_player_style_2 || null,
               notes: game.notes?.trim() || null,
@@ -428,9 +477,6 @@ export default function EditEvent() {
         >
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h4" component="h1">
-          試合結果を編集
-        </Typography>
       </Box>
 
       {/* Alerts */}
@@ -547,6 +593,7 @@ export default function EditEvent() {
                           onGameChange={(field, value) => handleGameChange(index, gameIndex, field, value)}
                           onRemoveGame={match.match_games.length > 1 ? () => handleRemoveGame(index, gameIndex) : undefined}
                           disabled={saving}
+                          members={members}
                         />
                       ))}
                     </Box>

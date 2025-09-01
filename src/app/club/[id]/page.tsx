@@ -16,13 +16,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
 
 // Icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -213,48 +207,72 @@ export default function MatchResultDetail() {
               ゲーム結果がありません
             </Typography>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>プレイヤー</TableCell>
-                    <TableCell>対戦相手</TableCell>
-                    <TableCell align="center">プレイヤーセット数</TableCell>
-                    <TableCell align="center">相手セット数</TableCell>
-                    <TableCell align="center">結果</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {gameResults.map((game, index) => (
-                    <TableRow key={game.id || index}>
-                      <TableCell>
-                        {game.player?.name || `プレイヤーID: ${game.player_id}`}
-                      </TableCell>
-                      <TableCell>
-                        {game.opponent?.name || `プレイヤーID: ${game.opponent_id}`}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="h6" component="span">
-                          {game.player_game_set}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="h6" component="span">
-                          {game.opponent_game_set}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
+            <Stack spacing={3}>
+              {gameResults.map((game, index) => (
+                <Card key={game.id || index} variant="outlined">
+                  <CardContent>
+                    {/* 中央: スコアと結果 */}
+                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                      <Typography variant="h6" sx={{ mb: 1 }}>
+                        {game.player?.name || `プレイヤーID: ${game.player_id}`} vs {game.opponent?.name || `プレイヤーID: ${game.opponent_id}`}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+                        <Chip
+                          label={game.player_game_set}
+                          color={game.player_game_set > game.opponent_game_set ? 'success' : 'default'}
+                          sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+                        />
+                        <Typography variant="h6">-</Typography>
+                        <Chip
+                          label={game.opponent_game_set}
+                          color={game.opponent_game_set > game.player_game_set ? 'error' : 'default'}
+                          sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+                        />
+                      </Box>
+                      <Box sx={{ mt: 1 }}>
                         <Chip
                           label={game.player_game_set > game.opponent_game_set ? '勝利' : game.player_game_set < game.opponent_game_set ? '敗北' : '引き分け'}
                           color={game.player_game_set > game.opponent_game_set ? 'success' : game.player_game_set < game.opponent_game_set ? 'error' : 'default'}
                           size="small"
                         />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                      </Box>
+                    </Box>
+
+                    <Divider sx={{ mb: 2 }} />
+
+                    {/* プレイヤー詳細情報 */}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 2 }}>
+                      {/* 左側: プレイヤー */}
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                          {game.player?.name || `プレイヤーID: ${game.player_id}`}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ID: {game.player_id}
+                        </Typography>
+                      </Box>
+
+                      {/* 中央: VS */}
+                      <Box sx={{ textAlign: 'center', px: 2 }}>
+                        <Typography variant="h6" color="text.secondary">
+                          VS
+                        </Typography>
+                      </Box>
+
+                      {/* 右側: 対戦相手 */}
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                          {game.opponent?.name || `プレイヤーID: ${game.opponent_id}`}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ID: {game.opponent_id}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
           )}
         </CardContent>
       </Card>

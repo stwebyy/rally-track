@@ -21,6 +21,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
 // Icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -36,7 +38,6 @@ interface Member {
 
 interface GameRecord {
   id: number;
-  event_name: string;
   event_date: string;
   opponent_name: string;
   team_sets: number;
@@ -67,6 +68,7 @@ export default function MemberRecord() {
   const [clubOpponentStats, setClubOpponentStats] = React.useState<OpponentStats[]>([]);
   const [externalOpponentStats, setExternalOpponentStats] = React.useState<OpponentStats[]>([]);
   const [currentTab, setCurrentTab] = React.useState(0);
+  const [expandedAccordions, setExpandedAccordions] = React.useState<Set<string>>(new Set());
 
   const supabase = createClient();
 
@@ -144,7 +146,6 @@ export default function MemberRecord() {
 
           const gameRecord: GameRecord = {
             id: game.id,
-            event_name: `部内試合 (${matchResult.location || '場所未記載'})`,
             event_date: matchResult.date,
             opponent_name: opponentName,
             team_sets: myScore,
@@ -181,7 +182,6 @@ export default function MemberRecord() {
         const externalStatsMap = new Map<string, OpponentStats>();
         externalGamesData?.forEach((game) => {
           const matchResult = game.match_results as unknown as { events: { name: string; date: string } };
-          const eventName = matchResult.events.name;
           const eventDate = matchResult.events.date;
           const isWin = game.team_sets > game.opponent_sets;
 
@@ -197,7 +197,6 @@ export default function MemberRecord() {
 
           const gameRecord: GameRecord = {
             id: game.id,
-            event_name: eventName,
             event_date: eventDate,
             opponent_name: opponentName,
             team_sets: game.team_sets,
@@ -261,7 +260,48 @@ export default function MemberRecord() {
     setCurrentTab(newValue);
   };
 
+  const handleAccordionChange = (panelId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedAccordions(prev => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(panelId);
+      } else {
+        newSet.delete(panelId);
+      }
+      return newSet;
+    });
+  };
+
   const currentStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
+
+  // タブごとの戦績を計算
+  const calculateTabStats = React.useMemo(() => {
+    const currentTabStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
+
+    let totalWins = 0;
+    let totalLosses = 0;
+    let totalTeamSets = 0;
+    let totalOpponentSets = 0;
+
+    currentTabStats.forEach(stats => {
+      totalWins += stats.wins;
+      totalLosses += stats.losses;
+      totalTeamSets += stats.total_team_sets;
+      totalOpponentSets += stats.total_opponent_sets;
+    });
+
+    const totalGames = totalWins + totalLosses;
+    const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+
+    return {
+      totalWins,
+      totalLosses,
+      totalGames,
+      totalTeamSets,
+      totalOpponentSets,
+      winRate,
+    };
+  }, [currentTab, clubOpponentStats, externalOpponentStats]);
 
   if (loading) {
     return (
@@ -295,11 +335,9 @@ export default function MemberRecord() {
         <IconButton onClick={() => router.back()} color="inherit">
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h4" component="h1">
-          {member.name}の戦績
-        </Typography>
       </Box>
 
+      {/* タブ切り替えと戦績表示 */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={currentTab} onChange={handleTabChange} aria-label="試合タイプ">
           <Tab label="部内試合結果" />
@@ -307,22 +345,71 @@ export default function MemberRecord() {
         </Tabs>
       </Box>
 
+      {/* 選択中のタブの戦績表示 */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" gutterBottom>
+            {currentTab === 0 ? '部内試合戦績' : '部外試合戦績'}
+          </Typography>
+          <Box display="flex" gap={4} flexWrap="wrap" alignItems="center">
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                総試合数
+              </Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {calculateTabStats.totalGames}試合
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                勝敗
+              </Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {calculateTabStats.totalWins}勝 {calculateTabStats.totalLosses}敗
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                勝率
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" color={calculateTabStats.winRate >= 50 ? 'success.main' : 'text.primary'}>
+                {calculateTabStats.winRate}%
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                合計セット数
+              </Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {calculateTabStats.totalTeamSets} - {calculateTabStats.totalOpponentSets}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+
       {currentStats.length === 0 ? (
         <Alert severity="info">
           {currentTab === 0 ? '部内試合記録がありません。' : '部外試合記録がありません。'}
         </Alert>
       ) : (
         <Stack spacing={2}>
-          {currentStats.map((stats: OpponentStats, index: number) => (
-            <Accordion key={stats.opponent_name} defaultExpanded={index === 0}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls={`panel-${index}-content`}
-                id={`panel-${index}-header`}
+          {currentStats.map((stats: OpponentStats, index: number) => {
+            const panelId = `${currentTab}-${stats.opponent_name}`;
+            return (
+              <Accordion
+                key={stats.opponent_name}
+                expanded={expandedAccordions.has(panelId)}
+                onChange={handleAccordionChange(panelId)}
               >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls={`panel-${index}-content`}
+                  id={`panel-${index}-header`}
+                >
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
-                  <Typography variant="h6">
-                    {member.name} 対 {stats.opponent_name}
+                  <Typography variant="body1">
+                    対 {stats.opponent_name}
                   </Typography>
                   <Box display="flex" gap={2} sx={{ mr: 2 }}>
                     <Chip
@@ -344,7 +431,7 @@ export default function MemberRecord() {
                     <Typography variant="body2" color="text.secondary">
                       勝敗
                     </Typography>
-                    <Typography variant="h6">
+                    <Typography variant="body2" fontWeight="bold">
                       {stats.wins}勝 {stats.losses}敗
                     </Typography>
                   </Box>
@@ -353,7 +440,7 @@ export default function MemberRecord() {
                     <Typography variant="body2" color="text.secondary">
                       勝率
                     </Typography>
-                    <Typography variant="h6">
+                    <Typography variant="body2" fontWeight="bold">
                       {stats.win_rate}%
                     </Typography>
                   </Box>
@@ -362,7 +449,7 @@ export default function MemberRecord() {
                     <Typography variant="body2" color="text.secondary">
                       合計セット数
                     </Typography>
-                    <Typography variant="h6">
+                    <Typography variant="body2" fontWeight="bold">
                       {stats.total_team_sets} - {stats.total_opponent_sets}
                     </Typography>
                   </Box>
@@ -377,10 +464,8 @@ export default function MemberRecord() {
                     <TableHead>
                       <TableRow>
                         <TableCell>年月日</TableCell>
-                        <TableCell>大会名</TableCell>
                         <TableCell>セット数</TableCell>
                         <TableCell>勝敗</TableCell>
-                        {currentTab === 1 && <TableCell>パートナー</TableCell>}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -389,7 +474,6 @@ export default function MemberRecord() {
                           <TableCell>
                             {new Date(game.event_date).toLocaleDateString('ja-JP')}
                           </TableCell>
-                          <TableCell>{game.event_name}</TableCell>
                           <TableCell>
                             {game.team_sets}-{game.opponent_sets}
                           </TableCell>
@@ -400,15 +484,6 @@ export default function MemberRecord() {
                               size="small"
                             />
                           </TableCell>
-                          {currentTab === 1 && (
-                            <TableCell>
-                              {game.is_doubles ? (
-                                game.partner_name ? game.partner_name : '-'
-                              ) : (
-                                'シングルス'
-                              )}
-                            </TableCell>
-                          )}
                         </TableRow>
                       ))}
                       {stats.games.length === 0 && (
@@ -423,7 +498,8 @@ export default function MemberRecord() {
                 </TableContainer>
               </AccordionDetails>
             </Accordion>
-          ))}
+            );
+          })}
         </Stack>
       )}
     </PageLayout>

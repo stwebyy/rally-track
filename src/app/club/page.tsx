@@ -137,7 +137,7 @@ export default function ClubMatchResults() {
       {
         field: 'date',
         headerName: '年月日',
-        width: 120,
+        width: 115,
         // 日付文字列から年月日部分のみを表示
         valueFormatter: (value: string) => {
           if (!value) return '';
@@ -148,8 +148,8 @@ export default function ClubMatchResults() {
       {
         field: 'location',
         headerName: '場所',
-        width: 150,
-        minWidth: 150,
+        width: 120,
+        minWidth: 120,
       },
       {
         field: 'game_count',
@@ -191,9 +191,6 @@ export default function ClubMatchResults() {
     <PageLayout title="原卓会部内試合結果">
       {/* Page header with actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          原卓会部内試合結果
-        </Typography>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Tooltip title="データを再読み込み" placement="left" enterDelay={1000}>
             <div>

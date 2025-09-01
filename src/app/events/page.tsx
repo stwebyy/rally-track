@@ -187,9 +187,6 @@ export default function Events() {
     <PageLayout title="試合結果">
       {/* Page header with actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          試合結果
-        </Typography>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Tooltip title="データを再読み込み" placement="left" enterDelay={1000}>
             <div>

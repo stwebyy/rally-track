@@ -257,7 +257,7 @@ export default function EventDetail() {
         {/* Match Results */}
         <Card>
           <CardHeader
-            title="試合結果"
+            title="部外試合結果"
             subheader={`${event.match_results?.length || 0}件の試合`}
           />
           <CardContent>

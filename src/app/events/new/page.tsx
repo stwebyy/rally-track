@@ -351,7 +351,7 @@ export default function NewEvent() {
   };
 
   return (
-    <PageLayout title="新規試合結果作成">
+    <PageLayout title="新規部外結果作成">
       <Box display="flex" alignItems="center" gap={2} mb={3}>
         <IconButton onClick={() => router.push('/events')} color="inherit">
           <ArrowBackIcon />

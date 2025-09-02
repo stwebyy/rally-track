@@ -184,7 +184,7 @@ export default function Events() {
   );
 
   return (
-    <PageLayout title="試合結果">
+    <PageLayout title="部外試合結果">
       {/* Page header with actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Stack direction="row" alignItems="center" spacing={1}>

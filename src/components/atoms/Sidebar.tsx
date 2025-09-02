@@ -93,7 +93,7 @@ export default function Sidebar({
 
   const menuItems = [
     {
-      text: '試合結果',
+      text: '部外結果',
       icon: <SportsIcon />,
       onClick: () => handleNavigation('/events'),
     },

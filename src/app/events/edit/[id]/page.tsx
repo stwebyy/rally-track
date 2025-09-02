@@ -467,7 +467,7 @@ export default function EditEvent() {
   }
 
   return (
-    <PageLayout title="試合結果を編集">
+    <PageLayout title="部外試合結果を編集">
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <IconButton

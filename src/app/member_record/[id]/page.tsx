@@ -408,21 +408,30 @@ export default function MemberRecord() {
                   id={`panel-${index}-header`}
                 >
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
-                  <Typography variant="body1">
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      flex: '1',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: { xs: '115px', sm: '200px', md: '300px' }
+                    }}
+                  >
                     対 {stats.opponent_name}
                   </Typography>
-                  <Box display="flex" gap={2} sx={{ mr: 2 }}>
                     <Chip
-                      label={`${stats.wins}勝 ${stats.losses}敗`}
+                      label={`${stats.wins}勝${stats.losses}敗`}
                       color={stats.wins > stats.losses ? 'success' : stats.wins < stats.losses ? 'error' : 'default'}
                       size="small"
+                      sx={{ minWidth: '86px' }}
                     />
                     <Chip
-                      label={`勝率 ${stats.win_rate}%`}
+                      label={`勝率: ${stats.win_rate}%`}
                       variant="outlined"
                       size="small"
+                      sx={{ minWidth: '78px' }}
                     />
-                  </Box>
                 </Box>
               </AccordionSummary>
               <AccordionDetails>

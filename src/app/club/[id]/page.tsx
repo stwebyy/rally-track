@@ -212,10 +212,52 @@ export default function MatchResultDetail() {
                 <Card key={game.id || index} variant="outlined">
                   <CardContent>
                     {/* 中央: スコアと結果 */}
-                    <Box sx={{ textAlign: 'center', mb: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 1 }}>
-                        {game.player?.name || `プレイヤーID: ${game.player_id}`} vs {game.opponent?.name || `プレイヤーID: ${game.opponent_id}`}
-                      </Typography>
+                    <Box sx={{ textAlign: 'center' }}>
+                      {/* プレイヤー名表示 - 固定レイアウト */}
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 1,
+                        gap: 1
+                      }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            flex: '1 1 0',
+                            textAlign: 'right',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: { xs: '120px', sm: '200px' }
+                          }}
+                        >
+                          {game.player?.name || `プレイヤーID: ${game.player_id}`}
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            flexShrink: 0,
+                            fontWeight: 'bold',
+                            px: 1
+                          }}
+                        >
+                          vs
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            flex: '1 1 0',
+                            textAlign: 'left',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: { xs: '120px', sm: '200px' }
+                          }}
+                        >
+                          {game.opponent?.name || `プレイヤーID: ${game.opponent_id}`}
+                        </Typography>
+                      </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
                         <Chip
                           label={game.player_game_set}

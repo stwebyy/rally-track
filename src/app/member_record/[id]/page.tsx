@@ -19,10 +19,10 @@ import Stack from '@mui/material/Stack';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
@@ -74,6 +74,7 @@ export default function MemberRecord() {
   const [currentTab, setCurrentTab] = React.useState(0);
   const [expandedAccordions, setExpandedAccordions] = React.useState<Set<string>>(new Set());
   const [selectedPeriods, setSelectedPeriods] = React.useState<Record<string, string>>({});
+  const [globalSelectedPeriod, setGlobalSelectedPeriod] = React.useState<string>('');
 
   const supabase = createClient();
 
@@ -325,20 +326,60 @@ export default function MemberRecord() {
     }));
   }, [currentTab]);
 
+  const handleGlobalPeriodChange = React.useCallback((period: string) => {
+    setGlobalSelectedPeriod(period);
+  }, []);
+
+  // 全体のデータから利用可能な期間を取得
+  const getGlobalAvailablePeriods = React.useMemo(() => {
+    const allGames: GameRecord[] = [];
+    const currentTabStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
+
+    currentTabStats.forEach(stats => {
+      allGames.push(...stats.games);
+    });
+
+    const periods = new Set<string>();
+    allGames.forEach(game => {
+      const date = new Date(game.event_date);
+      const yearMonth = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      periods.add(yearMonth);
+    });
+    return Array.from(periods).sort().reverse(); // 新しい順
+  }, [currentTab, clubOpponentStats, externalOpponentStats]);
+
   // タブごとの戦績を計算
   const calculateTabStats = React.useMemo(() => {
     const currentTabStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
+
+    // 期間でフィルタリング
+    let filteredStats = currentTabStats;
+    if (globalSelectedPeriod !== '全期間') {
+      filteredStats = currentTabStats.map(stats => ({
+        ...stats,
+        games: filterGamesByPeriod(stats.games, globalSelectedPeriod)
+      })).filter(stats => stats.games.length > 0);
+    }
 
     let totalWins = 0;
     let totalLosses = 0;
     let totalTeamSets = 0;
     let totalOpponentSets = 0;
 
-    currentTabStats.forEach(stats => {
-      totalWins += stats.wins;
-      totalLosses += stats.losses;
-      totalTeamSets += stats.total_team_sets;
-      totalOpponentSets += stats.total_opponent_sets;
+    filteredStats.forEach(stats => {
+      if (globalSelectedPeriod === '全期間') {
+        totalWins += stats.wins;
+        totalLosses += stats.losses;
+        totalTeamSets += stats.total_team_sets;
+        totalOpponentSets += stats.total_opponent_sets;
+      } else {
+        // 期間フィルタリング後の統計を計算
+        const periodStats = calculateStatsForPeriod(stats, globalSelectedPeriod);
+        totalWins += periodStats.wins;
+        totalLosses += periodStats.losses;
+        totalTeamSets += periodStats.total_team_sets;
+        totalOpponentSets += periodStats.total_opponent_sets;
+      }
     });
 
     const totalGames = totalWins + totalLosses;
@@ -352,7 +393,7 @@ export default function MemberRecord() {
       totalOpponentSets,
       winRate,
     };
-  }, [currentTab, clubOpponentStats, externalOpponentStats]);
+  }, [currentTab, clubOpponentStats, externalOpponentStats, globalSelectedPeriod, filterGamesByPeriod, calculateStatsForPeriod]);
 
   if (loading) {
     return (
@@ -399,9 +440,26 @@ export default function MemberRecord() {
       {/* 選択中のタブの戦績表示 */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="subtitle1" gutterBottom>
-            {currentTab === 0 ? '部内試合戦績' : '部外試合戦績'}
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="subtitle1">
+              {currentTab === 0 ? '部内試合戦績' : '部外試合戦績'}
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>期間</InputLabel>
+              <Select
+                value={globalSelectedPeriod}
+                onChange={(e) => handleGlobalPeriodChange(e.target.value)}
+                label="期間"
+              >
+                <MenuItem value="全期間">全期間</MenuItem>
+                {getGlobalAvailablePeriods.map((period) => (
+                  <MenuItem key={period} value={period}>
+                    {period}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
           <Box display="flex" gap={4} flexWrap="wrap" alignItems="center">
             <Box>
               <Typography variant="caption" color="text.secondary">

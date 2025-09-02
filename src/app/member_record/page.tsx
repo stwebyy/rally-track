@@ -343,14 +343,6 @@ export default function MemberRecordRanking() {
                   {Math.round(rankings.reduce((sum, member) => sum + member.total_games, 0) / 2)}試合
                 </Typography>
               </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  平均勝率
-                </Typography>
-                <Typography variant="body2" fontWeight="bold">
-                  {rankings.length > 0 ? Math.round(rankings.reduce((sum, member) => sum + member.win_rate, 0) / rankings.length) : 0}%
-                </Typography>
-              </Box>
             </Box>
           </CardContent>
         </Card>

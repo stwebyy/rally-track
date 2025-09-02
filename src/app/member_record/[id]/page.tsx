@@ -23,6 +23,10 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 // Icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -69,6 +73,7 @@ export default function MemberRecord() {
   const [externalOpponentStats, setExternalOpponentStats] = React.useState<OpponentStats[]>([]);
   const [currentTab, setCurrentTab] = React.useState(0);
   const [expandedAccordions, setExpandedAccordions] = React.useState<Set<string>>(new Set());
+  const [selectedPeriods, setSelectedPeriods] = React.useState<Record<string, string>>({});
 
   const supabase = createClient();
 
@@ -274,6 +279,52 @@ export default function MemberRecord() {
 
   const currentStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
 
+  // 期間選択用のヘルパー関数
+  const getAvailablePeriods = React.useCallback((games: GameRecord[]) => {
+    const periods = new Set<string>();
+    games.forEach(game => {
+      const date = new Date(game.event_date);
+      const yearMonth = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      periods.add(yearMonth);
+    });
+    return Array.from(periods).sort().reverse(); // 新しい順
+  }, []);
+
+  const filterGamesByPeriod = React.useCallback((games: GameRecord[], period: string) => {
+    if (!period) return games;
+    return games.filter(game => {
+      const date = new Date(game.event_date);
+      const yearMonth = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return yearMonth === period;
+    });
+  }, []);
+
+  const calculateStatsForPeriod = React.useCallback((stats: OpponentStats, period: string) => {
+    const filteredGames = filterGamesByPeriod(stats.games, period);
+    const wins = filteredGames.filter(game => game.is_win).length;
+    const losses = filteredGames.length - wins;
+    const totalTeamSets = filteredGames.reduce((sum, game) => sum + game.team_sets, 0);
+    const totalOpponentSets = filteredGames.reduce((sum, game) => sum + game.opponent_sets, 0);
+    const winRate = filteredGames.length > 0 ? Math.round((wins / filteredGames.length) * 100) : 0;
+
+    return {
+      ...stats,
+      wins,
+      losses,
+      total_team_sets: totalTeamSets,
+      total_opponent_sets: totalOpponentSets,
+      win_rate: winRate,
+      games: filteredGames.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()),
+    };
+  }, [filterGamesByPeriod]);
+
+  const handlePeriodChange = React.useCallback((opponentName: string, period: string) => {
+    setSelectedPeriods(prev => ({
+      ...prev,
+      [`${currentTab}-${opponentName}`]: period
+    }));
+  }, [currentTab]);
+
   // タブごとの戦績を計算
   const calculateTabStats = React.useMemo(() => {
     const currentTabStats = currentTab === 0 ? clubOpponentStats : externalOpponentStats;
@@ -435,76 +486,105 @@ export default function MemberRecord() {
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
-                <Box display="flex" gap={4} mb={3} flexWrap="wrap">
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      勝敗
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {stats.wins}勝 {stats.losses}敗
-                    </Typography>
-                  </Box>
+                {(() => {
+                  const selectedPeriod = selectedPeriods[`${currentTab}-${stats.opponent_name}`] || '';
+                  const availablePeriods = getAvailablePeriods(stats.games);
+                  const displayStats = calculateStatsForPeriod(stats, selectedPeriod);
 
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      勝率
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {stats.win_rate}%
-                    </Typography>
-                  </Box>
+                  return (
+                    <>
+                      {/* 期間選択 */}
+                      <Box sx={{ mb: 3 }}>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <InputLabel>期間</InputLabel>
+                          <Select
+                            value={selectedPeriod || '全期間'}
+                            onChange={(e) => handlePeriodChange(stats.opponent_name, e.target.value === '全期間' ? '' : e.target.value)}
+                            label="期間"
+                          >
+                            <MenuItem value="全期間">全期間</MenuItem>
+                            {availablePeriods.map((period) => (
+                              <MenuItem key={period} value={period}>
+                                {period}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Box>
 
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      合計セット数
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {stats.total_team_sets} - {stats.total_opponent_sets}
-                    </Typography>
-                  </Box>
-                </Box>
+                      <Box display="flex" gap={4} mb={3} flexWrap="wrap">
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            勝敗
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {displayStats.wins}勝 {displayStats.losses}敗
+                          </Typography>
+                        </Box>
 
-                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  直近5試合の記録
-                </Typography>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            勝率
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {displayStats.win_rate}%
+                          </Typography>
+                        </Box>
 
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>年月日</TableCell>
-                        <TableCell>セット数</TableCell>
-                        <TableCell>勝敗</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {stats.games.slice(0, 5).map((game: GameRecord) => (
-                        <TableRow key={game.id}>
-                          <TableCell>
-                            {new Date(game.event_date).toLocaleDateString('ja-JP')}
-                          </TableCell>
-                          <TableCell>
-                            {game.team_sets}-{game.opponent_sets}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={game.is_win ? '勝ち' : '負け'}
-                              color={game.is_win ? 'success' : 'error'}
-                              size="small"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {stats.games.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={currentTab === 0 ? 4 : 5} align="center">
-                            試合記録がありません
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            合計セット数
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {displayStats.total_team_sets} - {displayStats.total_opponent_sets}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                        {selectedPeriod ? `${selectedPeriod}の` : ''}直近5試合の記録
+                      </Typography>
+
+                      <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>年月日</TableCell>
+                              <TableCell>セット数</TableCell>
+                              <TableCell>勝敗</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {displayStats.games.slice(0, 5).map((game: GameRecord) => (
+                              <TableRow key={game.id}>
+                                <TableCell>
+                                  {new Date(game.event_date).toLocaleDateString('ja-JP')}
+                                </TableCell>
+                                <TableCell>
+                                  {game.team_sets}-{game.opponent_sets}
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={game.is_win ? '勝ち' : '負け'}
+                                    color={game.is_win ? 'success' : 'error'}
+                                    size="small"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {displayStats.games.length === 0 && (
+                              <TableRow>
+                                <TableCell colSpan={3} align="center">
+                                  {selectedPeriod ? 'この期間の' : ''}試合記録がありません
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </>
+                  );
+                })()}
               </AccordionDetails>
             </Accordion>
             );

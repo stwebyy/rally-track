@@ -19,6 +19,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -101,6 +102,11 @@ export default function Sidebar({
       text: '部内結果',
       icon: <GroupIcon />,
       onClick: () => handleNavigation('/club'),
+    },
+    {
+      text: '部内ランキング',
+      icon: <LeaderboardIcon />,
+      onClick: () => handleNavigation('/member_record'),
     },
   ];
 

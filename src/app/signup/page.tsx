@@ -313,7 +313,7 @@ export default function SignUp() {
                 required
                 fullWidth
                 id="name"
-                placeholder="原 卓哉"
+                placeholder="ユーザー名を入力"
                 error={nameError}
                 helperText={nameErrorMessage}
                 color={nameError ? 'error' : 'primary'}

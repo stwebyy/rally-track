@@ -22,7 +22,7 @@ const SUPPORTED_VIDEO_FORMATS = [
 ];
 
 // 大容量ファイルアップロード用の設定
-export const maxDuration = 1800; // 30分
+export const maxDuration = 300; // 5分（Vercel Hobby プランの上限）
 export const dynamic = 'force-dynamic'; // 動的レンダリングを強制
 export const runtime = 'nodejs'; // Node.jsランタイムを使用
 

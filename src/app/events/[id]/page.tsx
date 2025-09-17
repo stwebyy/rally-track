@@ -28,59 +28,22 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 import { createClient } from '@/utils/supabase/client';
 import PageLayout from '@/components/molescules/PageLayout';
+import { Event, MatchGame, MatchResult, GameMovie, HaratakuMember } from '@/types/database';
 
-type Event = {
-  id: number;
-  name: string;
-  date: string;
-  location: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-type MatchGame = {
-  id: number;
-  match_result_id: number;
-  game_no: number;
-  player_name: string;
-  player_style: string;
-  opponent_player_name: string;
-  opponent_player_style: string;
-  team_sets: number;
-  opponent_sets: number;
-  is_doubles: boolean;
-  player_name_2?: string;
-  player_style_2?: string;
-  opponent_player_name_2?: string;
-  opponent_player_style_2?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
+type MatchGameWithDetails = MatchGame & {
+  player?: HaratakuMember;
+  player_2?: HaratakuMember;
   match_game_movies?: {
-    game_movies: {
-      id: number;
-      title: string;
-      url: string;
-      created_at: string;
-    };
+    game_movies: GameMovie;
   }[];
 }
 
-type MatchResult = {
-  id: number;
-  event_id: number;
-  player_team_name: string;
-  opponent_team_name: string;
-  player_team_sets: number;
-  opponent_sets: number;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  match_games: MatchGame[];
+type MatchResultWithGames = MatchResult & {
+  match_games: MatchGameWithDetails[];
 }
 
 type EventWithMatchResults = Event & {
-  match_results: MatchResult[];
+  match_results: MatchResultWithGames[];
 }
 
 export default function EventDetail() {
@@ -169,16 +132,6 @@ export default function EventDetail() {
       alert('削除に失敗しました');
     }
     setDeleteDialogOpen(false);
-  };
-
-  const getResultChip = (playerTeamSets: number, opponentSets: number) => {
-    if (playerTeamSets > opponentSets) {
-      return <Chip label="勝ち" color="success" size="small" />;
-    } else if (playerTeamSets < opponentSets) {
-      return <Chip label="負け" color="error" size="small" />;
-    } else {
-      return <Chip label="引分" color="default" size="small" />;
-    }
   };
 
   if (isDataLoading) {
@@ -301,9 +254,6 @@ export default function EventDetail() {
                             sx={{ fontSize: '1.2rem', fontWeight: 'bold' }}
                           />
                         </Box>
-                        <Box sx={{ mt: 1 }}>
-                          {getResultChip(matchResult.player_team_sets, matchResult.opponent_sets)}
-                        </Box>
                       </Box>
 
                       <Divider sx={{ mb: 2 }} />
@@ -321,20 +271,11 @@ export default function EventDetail() {
                                 {/* 左側: 自チーム選手情報 */}
                                 <Box sx={{ textAlign: 'center' }}>
                                   <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                    {game.player_name}
-                                    {game.is_doubles && game.player_name_2 && (
+                                    {game.player?.name || 'プレイヤー不明'}
+                                    {game.is_doubles && game.player_2 && (
                                       <>
                                         <br />
-                                        {game.player_name_2}
-                                      </>
-                                    )}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {game.player_style}
-                                    {game.is_doubles && game.player_style_2 && (
-                                      <>
-                                        <br />
-                                        {game.player_style_2}
+                                        {game.player_2.name}
                                       </>
                                     )}
                                   </Typography>
@@ -345,7 +286,6 @@ export default function EventDetail() {
                                   <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
                                     {game.team_sets} - {game.opponent_sets}
                                   </Typography>
-                                  {getResultChip(game.team_sets, game.opponent_sets)}
                                 </Box>
 
                                 {/* 右側: 相手チーム選手情報 */}
@@ -356,15 +296,6 @@ export default function EventDetail() {
                                       <>
                                         <br />
                                         {game.opponent_player_name_2}
-                                      </>
-                                    )}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {game.opponent_player_style}
-                                    {game.is_doubles && game.opponent_player_style_2 && (
-                                      <>
-                                        <br />
-                                        {game.opponent_player_style_2}
                                       </>
                                     )}
                                   </Typography>

@@ -38,14 +38,12 @@ type MatchGame = {
   player_name: string;
   player_name_id?: number;
   opponent_player_name: string;
-  opponent_player_style: string;
   team_sets: number;
   opponent_sets: number;
   is_doubles: boolean;
   player_name_2?: string;
   player_name_2_id?: number;
   opponent_player_name_2?: string;
-  opponent_player_style_2?: string;
   notes?: string;
 }
 
@@ -77,7 +75,7 @@ export default function NewEvent() {
   const [matchResults, setMatchResults] = React.useState<MatchResult[]>([
     {
       game_no: 1,
-      player_team_name: '',
+      player_team_name: '原卓会',
       opponent_team_name: '',
       player_team_sets: 0,
       opponent_sets: 0,
@@ -86,7 +84,6 @@ export default function NewEvent() {
           game_no: 1,
           player_name: '',
           opponent_player_name: '',
-          opponent_player_style: '',
           team_sets: 0,
           opponent_sets: 0,
           is_doubles: false,
@@ -145,7 +142,6 @@ export default function NewEvent() {
             game_no: 1,
             player_name: '',
             opponent_player_name: '',
-            opponent_player_style: '',
             team_sets: 0,
             opponent_sets: 0,
             is_doubles: false,
@@ -182,7 +178,6 @@ export default function NewEvent() {
       game_no: newGameNo,
       player_name: '',
       opponent_player_name: '',
-      opponent_player_style: '',
       team_sets: 0,
       opponent_sets: 0,
       is_doubles: false,
@@ -318,13 +313,11 @@ export default function NewEvent() {
             game_no: game.game_no,
             player_name_id: getMemberIdByName(game.player_name),
             opponent_player_name: game.opponent_player_name.trim(),
-            opponent_player_style: game.opponent_player_style,
             team_sets: game.team_sets,
             opponent_sets: game.opponent_sets,
             is_doubles: game.is_doubles,
             player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
             opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
-            opponent_player_style_2: game.opponent_player_style_2 || null,
             notes: game.notes?.trim() || null,
           }));
 
@@ -583,21 +576,6 @@ export default function NewEvent() {
                                 onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name', e.target.value)}
                                 placeholder="例：佐藤花子"
                               />
-                              <FormControl fullWidth>
-                                <InputLabel>{game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}</InputLabel>
-                                <Select
-                                  value={game.opponent_player_style}
-                                  onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style', e.target.value)}
-                                  label={game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}
-                                >
-                                  <MenuItem value="">戦型（任意項目）</MenuItem>
-                                  {PLAYER_STYLES.map((style) => (
-                                    <MenuItem key={style} value={style}>
-                                      {style}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
                             </Box>
 
                             {game.is_doubles && (
@@ -610,21 +588,6 @@ export default function NewEvent() {
                                   onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_name_2', e.target.value)}
                                   placeholder="例：鈴木一郎"
                                 />
-                                <FormControl fullWidth>
-                                  <InputLabel>相手選手2人目の戦型</InputLabel>
-                                  <Select
-                                    value={game.opponent_player_style_2 || ''}
-                                    onChange={(e) => handleGameChange(index, gameIndex, 'opponent_player_style_2', e.target.value)}
-                                    label="相手選手2人目の戦型"
-                                  >
-                                    <MenuItem value="">戦型（任意項目）</MenuItem>
-                                    {PLAYER_STYLES.map((style) => (
-                                      <MenuItem key={style} value={style}>
-                                        {style}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
                               </Box>
                             )}
 

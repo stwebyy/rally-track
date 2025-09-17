@@ -130,22 +130,6 @@ const MatchGameForm = ({
               disabled={disabled}
               placeholder="例：佐藤花子"
             />
-            <FormControl fullWidth>
-              <InputLabel>{game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}</InputLabel>
-              <Select
-                value={game.opponent_player_style}
-                onChange={(e) => onGameChange('opponent_player_style', e.target.value)}
-                label={game.is_doubles ? '相手選手1人目の戦型' : '相手戦型'}
-                disabled={disabled}
-              >
-                <MenuItem value="">戦型（任意項目）</MenuItem>
-                {PLAYER_STYLES.map((style) => (
-                  <MenuItem key={style} value={style}>
-                    {style}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
           </Box>
 
           {game.is_doubles && (
@@ -159,22 +143,6 @@ const MatchGameForm = ({
                 disabled={disabled}
                 placeholder="例：鈴木一郎"
               />
-              <FormControl fullWidth>
-                <InputLabel>相手選手2人目の戦型</InputLabel>
-                <Select
-                  value={game.opponent_player_style_2 || ''}
-                  onChange={(e) => onGameChange('opponent_player_style_2', e.target.value)}
-                  label="相手選手2人目の戦型"
-                  disabled={disabled}
-                >
-                  <MenuItem value="">戦型（任意項目）</MenuItem>
-                  {PLAYER_STYLES.map((style) => (
-                    <MenuItem key={style} value={style}>
-                      {style}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </Box>
           )}
 

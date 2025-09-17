@@ -22,13 +22,50 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { createClient } from '@/utils/supabase/client';
-import { Event, MatchResult, MatchGame } from '@/types/event';
+import { Event } from '@/types/database';
 import {
   PageLayout,
   EventForm,
   MatchGameForm,
   ScoreDisplay
 } from '@/components';
+
+// 拡張型定義
+type MatchGameExtended = {
+  id?: number;
+  match_result_id?: number;
+  game_no?: number;
+  player_name_id: number;
+  opponent_player_name: string;
+  opponent_player_style: string;
+  team_sets: number;
+  opponent_sets: number;
+  created_at?: string;
+  updated_at?: string;
+  player_name_2_id?: number;
+  opponent_player_name_2?: string;
+  opponent_player_style_2?: string;
+  is_doubles: boolean;
+  notes?: string;
+  // UI用の追加プロパティ
+  player_name?: string;
+  player_name_2?: string;
+  player_style?: string;
+};
+
+type MatchResultExtended = {
+  id?: number;
+  event_id: number;
+  player_team_name: string;
+  opponent_team_name: string;
+  player_team_sets: number;
+  opponent_sets: number;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  game_no?: number;
+  match_games: MatchGameExtended[];
+};
 
 export default function EditEvent() {
   const router = useRouter();
@@ -47,7 +84,7 @@ export default function EditEvent() {
   const [eventLocation, setEventLocation] = React.useState('');
 
   // Match results
-  const [matchResults, setMatchResults] = React.useState<MatchResult[]>([]);
+  const [matchResults, setMatchResults] = React.useState<MatchResultExtended[]>([]);
   const [deletedMatchIds, setDeletedMatchIds] = React.useState<number[]>([]);
 
   // Members state for dropdowns
@@ -124,12 +161,10 @@ export default function EditEvent() {
             game_no: number;
             player_name_id: number;
             opponent_player_name: string;
-            opponent_player_style: string;
             team_sets: number;
             opponent_sets: number;
             player_name_2_id?: number;
             opponent_player_name_2?: string;
-            opponent_player_style_2?: string;
             is_doubles: boolean;
             notes?: string;
             player?: { name: string };
@@ -151,13 +186,14 @@ export default function EditEvent() {
           opponent_sets: 0,
           match_games: [{
             game_no: 1,
-            player_name: '',
-            player_style: '',
+            player_name_id: 0,
             opponent_player_name: '',
             opponent_player_style: '',
             team_sets: 0,
             opponent_sets: 0,
             is_doubles: false,
+            player_name: '',
+            player_style: '',
           }],
         }]);
       }
@@ -189,13 +225,14 @@ export default function EditEvent() {
         opponent_sets: 0,
         match_games: [{
           game_no: 1,
-          player_name: '',
-          player_style: '',
+          player_name_id: 0,
           opponent_player_name: '',
           opponent_player_style: '',
           team_sets: 0,
           opponent_sets: 0,
           is_doubles: false,
+          player_name: '',
+          player_style: '',
         }],
       },
     ]);
@@ -215,7 +252,7 @@ export default function EditEvent() {
     setMatchResults(updatedResults);
   };
 
-  const handleMatchResultChange = (index: number, field: keyof MatchResult, value: string | number) => {
+  const handleMatchResultChange = (index: number, field: keyof MatchResultExtended, value: string | number) => {
     const updatedResults = [...matchResults];
     updatedResults[index] = {
       ...updatedResults[index],
@@ -229,13 +266,14 @@ export default function EditEvent() {
     const newGameNo = updatedResults[matchIndex].match_games.length + 1;
     updatedResults[matchIndex].match_games.push({
       game_no: newGameNo,
-      player_name: '',
-      player_style: '',
+      player_name_id: 0,
       opponent_player_name: '',
       opponent_player_style: '',
       team_sets: 0,
       opponent_sets: 0,
       is_doubles: false,
+      player_name: '',
+      player_style: '',
     });
     setMatchResults(updatedResults);
   };
@@ -251,7 +289,7 @@ export default function EditEvent() {
     }
   };
 
-  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGame, value: string | number | boolean) => {
+  const handleGameChange = (matchIndex: number, gameIndex: number, field: keyof MatchGameExtended, value: string | number | boolean) => {
     const updatedResults = [...matchResults];
     updatedResults[matchIndex].match_games[gameIndex] = {
       ...updatedResults[matchIndex].match_games[gameIndex],
@@ -259,8 +297,8 @@ export default function EditEvent() {
     };
 
     // Calculate team scores based on individual game results
-    const teamWins = updatedResults[matchIndex].match_games.filter(game => game.team_sets > game.opponent_sets).length;
-    const opponentWins = updatedResults[matchIndex].match_games.filter(game => game.team_sets < game.opponent_sets).length;
+    const teamWins = updatedResults[matchIndex].match_games.filter((game: MatchGameExtended) => game.team_sets > game.opponent_sets).length;
+    const opponentWins = updatedResults[matchIndex].match_games.filter((game: MatchGameExtended) => game.team_sets < game.opponent_sets).length;
 
     updatedResults[matchIndex].player_team_sets = teamWins;
     updatedResults[matchIndex].opponent_sets = opponentWins;
@@ -288,7 +326,7 @@ export default function EditEvent() {
 
       for (let j = 0; j < match.match_games.length; j++) {
         const game = match.match_games[j];
-        if (!game.player_name.trim() || !game.opponent_player_name.trim()) {
+        if (!game.player_name?.trim() || !game.opponent_player_name.trim()) {
           setError(`試合 ${match.game_no} の ${j + 1}試合目: 選手名は必須です。`);
           return false;
         }
@@ -359,18 +397,18 @@ export default function EditEvent() {
 
           // Insert updated games
           if (match.match_games.length > 0) {
-            const gamesToInsert = match.match_games.map(game => ({
+            const gamesToInsert = match.match_games.map((game: MatchGameExtended) => ({
               match_result_id: match.id,
               game_no: game.game_no,
-              player_name_id: getMemberIdByName(game.player_name),
+              player_name_id: getMemberIdByName(game.player_name || ''),
               opponent_player_name: game.opponent_player_name.trim(),
-              opponent_player_style: game.opponent_player_style,
+              opponent_player_style: '',
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
               is_doubles: game.is_doubles,
               player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
               opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
-              opponent_player_style_2: game.opponent_player_style_2 || null,
+              opponent_player_style_2: null,
               notes: game.notes?.trim() || null,
             }));
 
@@ -399,18 +437,18 @@ export default function EditEvent() {
 
           // Insert games for new match
           if (match.match_games.length > 0) {
-            const gamesToInsert = match.match_games.map(game => ({
+            const gamesToInsert = match.match_games.map((game: MatchGameExtended) => ({
               match_result_id: newMatchData.id,
               game_no: game.game_no,
-              player_name_id: getMemberIdByName(game.player_name),
+              player_name_id: getMemberIdByName(game.player_name || ''),
               opponent_player_name: game.opponent_player_name.trim(),
-              opponent_player_style: game.opponent_player_style,
+              opponent_player_style: '',
               team_sets: game.team_sets,
               opponent_sets: game.opponent_sets,
               is_doubles: game.is_doubles,
               player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
               opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
-              opponent_player_style_2: game.opponent_player_style_2 || null,
+              opponent_player_style_2: null,
               notes: game.notes?.trim() || null,
             }));
 
@@ -585,12 +623,12 @@ export default function EditEvent() {
                         </Button>
                       </Box>
 
-                      {match.match_games.map((game, gameIndex) => (
+                      {match.match_games.map((game: MatchGameExtended, gameIndex: number) => (
                         <MatchGameForm
                           key={gameIndex}
-                          game={game}
+                          game={game as unknown as import('@/types/event').MatchGame}
                           totalGames={match.match_games.length}
-                          onGameChange={(field, value) => handleGameChange(index, gameIndex, field, value)}
+                          onGameChange={(field: string, value: string | number | boolean) => handleGameChange(index, gameIndex, field as keyof MatchGameExtended, value)}
                           onRemoveGame={match.match_games.length > 1 ? () => handleRemoveGame(index, gameIndex) : undefined}
                           disabled={saving}
                           members={members}

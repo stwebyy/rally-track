@@ -6,11 +6,11 @@ export const maxDuration = 30;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { sessionId } = params;
+    const { sessionId } = await params;
 
     // ユーザー認証確認
     const { data: { user }, error: authError } = await supabase.auth.getUser();

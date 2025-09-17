@@ -18,6 +18,7 @@ import {
   VideoLibrary as VideoLibraryIcon,
   CloudUpload as CloudUploadIcon,
   OpenInNew as OpenInNewIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -250,20 +251,36 @@ const VideosPage = () => {
                         }}
                       />
                     </Box>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<OpenInNewIcon />}
-                      onClick={() => openYouTubeVideo(video.youtube_url)}
-                      sx={{
-                        minWidth: { xs: '100%', sm: 'auto' },
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        px: { xs: 2, sm: 1.5 },
-                        py: { xs: 1, sm: 0.5 }
-                      }}
-                    >
-                      YouTube で見る
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={() => router.push(`/youtube/edit/${video.id.replace(/^(external_|internal_|standalone_)/, '')}`)}
+                        fullWidth={true}
+                        sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          px: { xs: 2, sm: 1.5 },
+                          py: { xs: 1, sm: 0.5 }
+                        }}
+                      >
+                        編集
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<OpenInNewIcon />}
+                        onClick={() => openYouTubeVideo(video.youtube_url)}
+                        fullWidth={true}
+                        sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          px: { xs: 2, sm: 1.5 },
+                          py: { xs: 1, sm: 0.5 }
+                        }}
+                      >
+                        YouTube で見る
+                      </Button>
+                    </Box>
                   </ListItem>
                   {index < videos.length - 1 && <Divider />}
                 </React.Fragment>

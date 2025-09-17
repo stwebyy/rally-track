@@ -18,6 +18,15 @@ export type GameResult = {
   // Join用
   player?: Member;
   opponent?: Member;
+  // 動画情報
+  harataku_game_movies?: {
+    game_movies: {
+      id: number;
+      title: string;
+      url: string;
+      created_at: string;
+    };
+  }[];
 }
 
 export type MatchResult = {

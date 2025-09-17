@@ -322,21 +322,21 @@ export async function GET(request: NextRequest) {
 
       const { data: matchGamesMovies } = await supabase
         .from('match_game_movies')
-        .select('game_movie_id');
+        .select('movie_id');
 
       if (matchGamesMovies) {
         matchGamesMovies.forEach((game) => {
-          usedMovieIds.add(game.game_movie_id);
+          usedMovieIds.add(game.movie_id);
         });
       }
 
       const { data: internalGamesMovies } = await supabase
         .from('harataku_game_movies')
-        .select('game_movie_id');
+        .select('movie_id');
 
       if (internalGamesMovies) {
         internalGamesMovies.forEach((game) => {
-          usedMovieIds.add(game.game_movie_id);
+          usedMovieIds.add(game.movie_id);
         });
       }
 

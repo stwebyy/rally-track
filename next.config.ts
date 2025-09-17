@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // 大きなファイルのアップロードに対応するためminificationを無効化
     serverMinification: false,
-    // App Routerで大きなファイルを扱うための設定
-    serverComponentsExternalPackages: ['googleapis'],
   },
+  // App Routerで大きなファイルを扱うための設定
+  serverExternalPackages: ['googleapis'],
   // App Routerでの大きなファイル処理のための設定
   images: {
     unoptimized: true

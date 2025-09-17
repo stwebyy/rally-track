@@ -26,7 +26,7 @@ export type HaratakuMember = {
 export type Event = {
   id: number;
   name: string;
-  event_date: string;
+  date: string;
   location?: string;
   created_at: string;
   updated_at: string;

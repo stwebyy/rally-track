@@ -24,6 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 import { createClient } from '@/utils/supabase/client';
 import { MatchResult, GameResult } from '@/types/club';
@@ -69,7 +70,15 @@ export default function MatchResultDetail() {
         .select(`
           *,
           player:harataku_members!player_id(*),
-          opponent:harataku_members!opponent_id(*)
+          opponent:harataku_members!opponent_id(*),
+          harataku_game_movies (
+            game_movies (
+              id,
+              title,
+              url,
+              created_at
+            )
+          )
         `)
         .eq('harataku_match_result_id', parseInt(id))
         .order('id');
@@ -272,6 +281,38 @@ export default function MatchResultDetail() {
                         />
                       </Box>
                     </Box>
+
+                    {/* 動画がある場合 */}
+                    {game.harataku_game_movies && game.harataku_game_movies.length > 0 && (
+                      <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                          📹 関連動画 ({game.harataku_game_movies.length}件)
+                        </Typography>
+                        <Stack spacing={1}>
+                          {game.harataku_game_movies.map((movieItem, movieIndex) => (
+                            <Box key={movieIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body2" sx={{ flex: 1, fontSize: '0.875rem' }}>
+                                {movieItem.game_movies.title}
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<PlayArrowIcon />}
+                                onClick={() => window.open(movieItem.game_movies.url, '_blank')}
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  minWidth: 'auto',
+                                  px: 1.5,
+                                  py: 0.5
+                                }}
+                              >
+                                YouTubeで見る
+                              </Button>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               ))}

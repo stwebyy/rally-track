@@ -21,6 +21,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import UploadIcon from '@mui/icons-material/Upload';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -45,7 +46,6 @@ const Sidebar = ({
   isExpanded,
   isMobile,
   onClose,
-  user, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: SidebarProps) => {
   const router = useRouter();
   const supabase = createClient();
@@ -113,6 +113,11 @@ const Sidebar = ({
       text: '動画一覧',
       icon: <VideoLibraryIcon />,
       onClick: () => handleNavigation('/youtube/videos'),
+    },
+    {
+      text: '動画アップロード',
+      icon: <UploadIcon />,
+      onClick: () => handleNavigation('/youtube/upload'),
     },
   ];
 

@@ -5,7 +5,7 @@ import {
 } from '@/types/database';
 
 // Supabaseクエリ結果の型定義
-interface ExternalGameQuery {
+type ExternalGameQuery = {
   id: number;
   created_at: string;
   game_no: number | null;
@@ -24,7 +24,7 @@ interface ExternalGameQuery {
   }[];
 }
 
-interface InternalGameQuery {
+type InternalGameQuery = {
   id: number;
   created_at: string;
   player_id: number;
@@ -43,7 +43,7 @@ interface InternalGameQuery {
   }[];
 }
 
-interface MatchResult {
+type MatchResult = {
   id: number;
   player_team_name: string;
   opponent_team_name: string;
@@ -53,13 +53,13 @@ interface MatchResult {
   }[];
 }
 
-interface EnrichedExternalGame extends ExternalGameQuery {
+type EnrichedExternalGame = ExternalGameQuery & {
   match_result?: MatchResult;
   event_date?: string;
   player_names: string[];
 }
 
-interface EnrichedInternalGame extends InternalGameQuery {
+type EnrichedInternalGame = InternalGameQuery & {
   player: { name: string };
   opponent: { name: string };
   match_date?: string;

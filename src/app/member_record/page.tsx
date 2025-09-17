@@ -22,7 +22,7 @@ import CardContent from '@mui/material/CardContent';
 import { createClient } from '@/utils/supabase/client';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface MemberRanking {
+type MemberRanking = {
   id: number;
   name: string;
   wins: number;
@@ -33,7 +33,7 @@ interface MemberRanking {
   total_games: number;
 }
 
-interface GameRecord {
+type GameRecord = {
   id: number;
   match_date: string;
   player_name: string;

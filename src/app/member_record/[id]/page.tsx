@@ -35,12 +35,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { createClient } from '@/utils/supabase/client';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface Member {
+type Member = {
   id: number;
   name: string;
 }
 
-interface GameRecord {
+type GameRecord = {
   id: number;
   event_date: string;
   opponent_name: string;
@@ -51,7 +51,7 @@ interface GameRecord {
   partner_name?: string;
 }
 
-interface OpponentStats {
+type OpponentStats = {
   opponent_name: string;
   wins: number;
   losses: number;

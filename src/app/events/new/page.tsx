@@ -33,7 +33,7 @@ import { createClient } from '@/utils/supabase/client';
 import { PLAYER_STYLES } from '@/types/constants';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface MatchGame {
+type MatchGame = {
   game_no: number;
   player_name: string;
   player_name_id?: number;
@@ -49,7 +49,7 @@ interface MatchGame {
   notes?: string;
 }
 
-interface MatchResult {
+type MatchResult = {
   id?: number;
   game_no: number;
   player_team_name: string;

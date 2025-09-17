@@ -10,12 +10,12 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-interface BreadcrumbItem {
+type BreadcrumbItem = {
   label: string;
   href?: string;
 }
 
-interface PageHeaderProps {
+type PageHeaderProps = {
   title: string;
   showBackButton?: boolean;
   backPath?: string;

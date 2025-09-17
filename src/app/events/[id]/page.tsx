@@ -28,7 +28,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { createClient } from '@/utils/supabase/client';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface Event {
+type Event = {
   id: number;
   name: string;
   date: string;
@@ -37,7 +37,7 @@ interface Event {
   updated_at: string;
 }
 
-interface MatchGame {
+type MatchGame = {
   id: number;
   match_result_id: number;
   game_no: number;
@@ -57,7 +57,7 @@ interface MatchGame {
   updated_at: string;
 }
 
-interface MatchResult {
+type MatchResult = {
   id: number;
   event_id: number;
   player_team_name: string;
@@ -70,7 +70,7 @@ interface MatchResult {
   match_games: MatchGame[];
 }
 
-interface EventWithMatchResults extends Event {
+type EventWithMatchResults = Event & {
   match_results: MatchResult[];
 }
 

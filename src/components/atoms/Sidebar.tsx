@@ -27,12 +27,12 @@ import type { User } from '@supabase/supabase-js';
 const DRAWER_WIDTH = 240;
 const MINI_DRAWER_WIDTH = 64;
 
-interface Member {
+type Member = {
   id: number;
   name: string;
 }
 
-interface SidebarProps {
+type SidebarProps = {
   isOpen: boolean;
   isExpanded: boolean;
   isMobile: boolean;

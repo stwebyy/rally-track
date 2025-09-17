@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-interface UseSidebarReturn {
+type UseSidebarReturn = {
   isDesktop: boolean;
   isDesktopSidebarExpanded: boolean;
   isMobileSidebarOpen: boolean;

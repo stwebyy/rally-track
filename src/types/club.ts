@@ -1,4 +1,4 @@
-export interface Member {
+export type Member = {
   id: number;
   name: string;
   auth_id: string;
@@ -6,7 +6,7 @@ export interface Member {
   updated_at?: string;
 }
 
-export interface GameResult {
+export type GameResult = {
   id?: number;
   match_result_id?: number;
   player_id: number;
@@ -20,7 +20,7 @@ export interface GameResult {
   opponent?: Member;
 }
 
-export interface MatchResult {
+export type MatchResult = {
   id?: number;
   date: string;
   location?: string | null;
@@ -29,6 +29,6 @@ export interface MatchResult {
   game_results?: GameResult[];
 }
 
-export interface MatchResultWithGameResults extends MatchResult {
+export type MatchResultWithGameResults = MatchResult & {
   game_results: GameResult[];
 }

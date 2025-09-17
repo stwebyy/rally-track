@@ -23,7 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface SimpleVideo {
+type SimpleVideo = {
   id: string;
   title: string;
   youtube_url: string;

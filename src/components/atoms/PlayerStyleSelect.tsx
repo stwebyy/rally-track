@@ -5,7 +5,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { PLAYER_STYLES } from '@/types/constants';
 
-interface PlayerStyleSelectProps {
+type PlayerStyleSelectProps = {
   value: string;
   onChange: (value: string) => void;
   label?: string;

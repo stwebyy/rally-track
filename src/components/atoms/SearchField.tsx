@@ -7,7 +7,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
 import { SxProps, Theme } from '@mui/material/styles';
 
-interface SearchFieldProps {
+type SearchFieldProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;

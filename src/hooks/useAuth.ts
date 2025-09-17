@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-interface UseAuthReturn {
+type UseAuthReturn = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;

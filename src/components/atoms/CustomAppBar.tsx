@@ -9,7 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '@/components/atoms/Sidebar';
 
-interface CustomAppBarProps {
+type CustomAppBarProps = {
   isExpanded: boolean;
   isMobile: boolean;
   onToggleSidebar: () => void;

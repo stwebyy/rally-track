@@ -29,7 +29,7 @@ import { createClient } from '@/utils/supabase/client';
 import { Member } from '@/types/club';
 import PageLayout from '@/components/molescules/PageLayout';
 
-interface GameResultForm {
+type GameResultForm = {
   player_id: number;
   opponent_id: number;
   player_game_set: number;

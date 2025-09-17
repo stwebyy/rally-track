@@ -20,12 +20,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { MatchGame } from '@/types/event';
 import { PLAYER_STYLES } from '@/types/constants';
 
-interface Member {
+type Member = {
   id: number;
   name: string;
 }
 
-interface MatchGameFormProps {
+type MatchGameFormProps = {
   game: MatchGame;
   totalGames: number;
   onGameChange: (field: keyof MatchGame, value: string | number | boolean) => void;

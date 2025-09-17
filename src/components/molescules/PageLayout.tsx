@@ -23,7 +23,7 @@ const LoadingSpinner = dynamic(() => import('@/components/atoms/LoadingSpinner')
   )
 });
 
-interface PageLayoutProps {
+type PageLayoutProps = {
   children: React.ReactNode;
   title?: string;
   showLoading?: boolean;

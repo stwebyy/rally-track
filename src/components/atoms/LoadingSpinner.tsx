@@ -19,7 +19,7 @@ const CircularProgress = dynamic(() => import('@mui/material/CircularProgress'),
   loading: () => <div style={spinnerStyle} />
 });
 
-interface LoadingSpinnerProps {
+type LoadingSpinnerProps = {
   size?: number;
   minHeight?: string;
 }

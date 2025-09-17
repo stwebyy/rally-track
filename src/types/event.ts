@@ -1,4 +1,4 @@
-export interface Event {
+export type Event = {
   id: number;
   name: string;
   date: string;
@@ -7,7 +7,7 @@ export interface Event {
   updated_at?: string;
 }
 
-export interface MatchGame {
+export type MatchGame = {
   id?: number;
   match_result_id?: number;
   game_no: number;
@@ -27,7 +27,7 @@ export interface MatchGame {
   notes?: string;
 }
 
-export interface MatchResult {
+export type MatchResult = {
   id?: number;
   event_id: number;
   game_no: number;
@@ -40,6 +40,6 @@ export interface MatchResult {
   updated_at?: string;
 }
 
-export interface EventWithMatchResults extends Event {
+export type EventWithMatchResults = Event & {
   match_results: MatchResult[];
 }

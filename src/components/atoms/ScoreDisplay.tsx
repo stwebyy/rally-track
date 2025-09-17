@@ -4,7 +4,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 
-interface ScoreDisplayProps {
+type ScoreDisplayProps = {
   playerName: string;
   playerScore: number;
   opponentName: string;

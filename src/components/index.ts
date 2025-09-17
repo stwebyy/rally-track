@@ -8,3 +8,5 @@ export { default as ScoreDisplay } from './atoms/ScoreDisplay';
 export { default as PageLayout } from './molescules/PageLayout';
 export { default as EventForm } from './molescules/EventForm';
 export { default as MatchGameForm } from './molescules/MatchGameForm';
+export { UploadResumeDialog } from './molescules/UploadResumeDialog';
+export { UploadProgressUI } from './molescules/UploadProgressUI';

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { CacheProvider } from '@emotion/react';
@@ -21,19 +21,54 @@ const theme = createTheme({
   },
 });
 
-// Emotion cache for Material-UI
-const cache = createCache({
-  key: 'css',
-  prepend: true,
-});
+// Emotion cache for Material-UI with SSR support
+let cache: ReturnType<typeof createCache> | null = null;
+
+const createEmotionCache = () => {
+  if (!cache) {
+    cache = createCache({
+      key: 'css',
+      prepend: true,
+      // SSR support
+      ...(typeof window === 'undefined' ? { insertionPoint: undefined } : {}),
+    });
+  }
+  return cache;
+};
 
 const ThemeRegistry = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Remove server-side injected CSS
+    const jssStyles = document.querySelector('#jss-server-side');
+    if (jssStyles && jssStyles.parentElement) {
+      jssStyles.parentElement.removeChild(jssStyles);
+    }
+  }, []);
+
+  const emotionCache = createEmotionCache();
+
+  // SSR時は最小限のスタイルで表示
+  if (!mounted) {
+    return (
+      <CacheProvider value={emotionCache}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </CacheProvider>
+    );
+  }
+
   return (
-    <CacheProvider value={cache}>
+    <CacheProvider value={emotionCache}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}

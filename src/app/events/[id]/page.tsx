@@ -270,7 +270,7 @@ export default function EventDetail() {
                               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 2 }}>
                                 {/* 左側: 自チーム選手情報 */}
                                 <Box sx={{ textAlign: 'center' }}>
-                                  <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     {game.player?.name || 'プレイヤー不明'}
                                     {game.is_doubles && game.player_2 && (
                                       <>
@@ -283,14 +283,14 @@ export default function EventDetail() {
 
                                 {/* 中央: スコア */}
                                 <Box sx={{ textAlign: 'center', px: 2 }}>
-                                  <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
                                     {game.team_sets} - {game.opponent_sets}
                                   </Typography>
                                 </Box>
 
                                 {/* 右側: 相手チーム選手情報 */}
                                 <Box sx={{ textAlign: 'center' }}>
-                                  <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     {game.opponent_player_name}
                                     {game.is_doubles && game.opponent_player_name_2 && (
                                       <>

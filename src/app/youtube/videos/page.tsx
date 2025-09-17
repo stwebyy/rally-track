@@ -262,7 +262,13 @@ const VideosPage = () => {
                         sx={{
                           '& .MuiListItemText-primary': {
                             fontSize: { xs: '0.875rem', sm: '1rem' },
-                            lineHeight: 1.4
+                            lineHeight: 1.4,
+                            display: '-webkit-box',
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: 3,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxHeight: { xs: '4.2em', sm: '4.2em' }
                           },
                           '& .MuiListItemText-secondary': {
                             fontSize: { xs: '0.75rem', sm: '0.875rem' }
@@ -275,7 +281,9 @@ const VideosPage = () => {
                       gap: { xs: 0.5, sm: 1 },
                       flexDirection: { xs: 'column', sm: 'row' },
                       flexShrink: 0,
-                      ml: { xs: 1, sm: 0 }
+                      ml: { xs: 0, sm: 0 },
+                      minWidth: { xs: '90px', sm: 'auto' },
+                      maxWidth: { xs: '90px', sm: 'none' }
                     }}>
                       <Button
                         variant="outlined"
@@ -284,9 +292,13 @@ const VideosPage = () => {
                         onClick={() => router.push(`/youtube/edit/${video.id.replace(/^(external_|internal_|standalone_)/, '')}`)}
                         sx={{
                           fontSize: { xs: '0.625rem', sm: '0.875rem' },
-                          px: { xs: 1, sm: 1.5 },
+                          px: { xs: 0.5, sm: 1.5 },
                           py: { xs: 0.25, sm: 0.5 },
-                          minWidth: { xs: 'auto', sm: 'unset' }
+                          minWidth: { xs: 'auto', sm: 'unset' },
+                          '& .MuiButton-startIcon': {
+                            marginRight: { xs: '4px', sm: '8px' },
+                            marginLeft: { xs: 0, sm: '-4px' }
+                          }
                         }}
                       >
                         編集
@@ -297,12 +309,17 @@ const VideosPage = () => {
                         startIcon={<OpenInNewIcon />}
                         onClick={() => openYouTubeVideo(video.youtube_url)}
                         sx={{
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          px: { xs: 2, sm: 1.5 },
-                          py: { xs: 1, sm: 0.5 }
+                          fontSize: { xs: '0.625rem', sm: '0.875rem' },
+                          px: { xs: 0.5, sm: 1.5 },
+                          py: { xs: 0.25, sm: 0.5 },
+                          minWidth: { xs: 'auto', sm: 'unset' },
+                          '& .MuiButton-startIcon': {
+                            marginRight: { xs: '4px', sm: '8px' },
+                            marginLeft: { xs: 0, sm: '-4px' }
+                          }
                         }}
                       >
-                        YouTube で見る
+                        YouTube
                       </Button>
                     </Box>
                   </ListItem>

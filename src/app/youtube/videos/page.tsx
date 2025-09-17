@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -13,6 +13,7 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Pagination,
 } from '@mui/material';
 import {
   VideoLibrary as VideoLibraryIcon,
@@ -41,6 +42,23 @@ const VideosPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [mounted, setMounted] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // ページネーション用のデータ計算
+  const paginatedVideos = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return videos.slice(startIndex, startIndex + itemsPerPage);
+  }, [videos, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(videos.length / itemsPerPage);
+
+  // ページ変更ハンドラ
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+    // ページ変更時にトップにスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Hydration対策
   useEffect(() => {
@@ -207,14 +225,15 @@ const VideosPage = () => {
         ) : (
           <Paper sx={{ p: { xs: 1, sm: 2 } }}>
             <List>
-              {videos.map((video, index) => (
+              {paginatedVideos.map((video, index) => (
                 <React.Fragment key={video.id}>
                   <ListItem
                     sx={{
-                      flexDirection: { xs: 'column', sm: 'row' },
+                      flexDirection: 'row',
                       alignItems: { xs: 'flex-start', sm: 'center' },
-                      gap: { xs: 2, sm: 0 },
-                      py: { xs: 2, sm: 1 }
+                      gap: { xs: 1, sm: 0 },
+                      pt: { xs: 2, sm: 1 },
+                      pb: { xs: 0, sm: 1 }
                     }}
                   >
                     <Box sx={{
@@ -251,17 +270,23 @@ const VideosPage = () => {
                         }}
                       />
                     </Box>
-                    <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
+                    <Box sx={{
+                      display: 'flex',
+                      gap: { xs: 0.5, sm: 1 },
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      flexShrink: 0,
+                      ml: { xs: 1, sm: 0 }
+                    }}>
                       <Button
                         variant="outlined"
                         size="small"
                         startIcon={<EditIcon />}
                         onClick={() => router.push(`/youtube/edit/${video.id.replace(/^(external_|internal_|standalone_)/, '')}`)}
-                        fullWidth={true}
                         sx={{
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          px: { xs: 2, sm: 1.5 },
-                          py: { xs: 1, sm: 0.5 }
+                          fontSize: { xs: '0.625rem', sm: '0.875rem' },
+                          px: { xs: 1, sm: 1.5 },
+                          py: { xs: 0.25, sm: 0.5 },
+                          minWidth: { xs: 'auto', sm: 'unset' }
                         }}
                       >
                         編集
@@ -271,7 +296,6 @@ const VideosPage = () => {
                         size="small"
                         startIcon={<OpenInNewIcon />}
                         onClick={() => openYouTubeVideo(video.youtube_url)}
-                        fullWidth={true}
                         sx={{
                           fontSize: { xs: '0.75rem', sm: '0.875rem' },
                           px: { xs: 2, sm: 1.5 },
@@ -282,10 +306,50 @@ const VideosPage = () => {
                       </Button>
                     </Box>
                   </ListItem>
-                  {index < videos.length - 1 && <Divider />}
+                  {index < paginatedVideos.length - 1 && <Divider />}
                 </React.Fragment>
               ))}
             </List>
+
+            {/* ページネーション */}
+            {videos.length > itemsPerPage && (
+              <>
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mt: 3,
+                  mb: 2
+                }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    size="small"
+                    color="primary"
+                    showFirstButton
+                    showLastButton
+                    sx={{
+                      '& .MuiPagination-ul': {
+                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                      }
+                    }}
+                  />
+                </Box>
+
+                {/* 件数表示 */}
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  textAlign="center"
+                  sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    mb: 1
+                  }}
+                >
+                  {videos.length}件中 {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, videos.length)}件を表示
+                </Typography>
+              </>
+            )}
           </Paper>
         )}
       </Box>

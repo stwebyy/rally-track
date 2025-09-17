@@ -11,7 +11,7 @@ interface UseAuthReturn {
   isAuthenticated: boolean;
 }
 
-export function useAuth(): UseAuthReturn {
+export const useAuth = (): UseAuthReturn => {
   const router = useRouter();
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);

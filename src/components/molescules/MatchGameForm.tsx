@@ -34,14 +34,14 @@ interface MatchGameFormProps {
   members?: Member[];
 }
 
-export default function MatchGameForm({
+const MatchGameForm = ({
   game,
   totalGames,
   onGameChange,
   onRemoveGame,
   disabled = false,
   members = [],
-}: MatchGameFormProps) {
+}: MatchGameFormProps) => {
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
       <CardContent sx={{ py: 2 }}>
@@ -239,4 +239,6 @@ export default function MatchGameForm({
       </CardContent>
     </Card>
   );
-}
+};
+
+export default MatchGameForm;

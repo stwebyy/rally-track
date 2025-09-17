@@ -15,7 +15,7 @@ interface UseSidebarReturn {
   handleCloseMobileSidebar: () => void;
 }
 
-export function useSidebar(): UseSidebarReturn {
+export const useSidebar = (): UseSidebarReturn => {
   const theme = useTheme();
   const [isHydrated, setIsHydrated] = React.useState(false);
 

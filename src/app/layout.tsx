@@ -5,6 +5,7 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import ThemeRegistry from '@/components/ThemeRegistry';
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -46,11 +47,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>) => {
   return (
     <html lang="ja" className={roboto.variable}>
       <head>
@@ -61,8 +62,12 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#1976d2" />
       </head>
       <body className={roboto.className}>
-        {children}
+        <ThemeRegistry>
+          {children}
+        </ThemeRegistry>
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

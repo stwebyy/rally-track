@@ -22,7 +22,7 @@ import { createClient } from '@/utils/supabase/client';
 import { EventWithMatchResults } from '@/types/event';
 import { PageLayout, SearchField } from '@/components';
 
-export default function Events() {
+const Events = () => {
   const router = useRouter();
 
   const [events, setEvents] = React.useState<EventWithMatchResults[]>([]);
@@ -284,3 +284,5 @@ export default function Events() {
     </PageLayout>
   );
 };
+
+export default Events;

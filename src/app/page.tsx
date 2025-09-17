@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 
-export default function Home() {
+const Home = () => {
   const router = useRouter();
 
   useEffect(() => {
@@ -31,4 +31,6 @@ export default function Home() {
       </Typography>
     </Box>
   );
-}
+};
+
+export default Home;

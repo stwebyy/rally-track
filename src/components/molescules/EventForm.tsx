@@ -15,7 +15,7 @@ interface EventFormProps {
   title?: string;
 }
 
-export default function EventForm({
+const EventForm = ({
   eventName,
   eventDate,
   eventLocation,
@@ -24,7 +24,7 @@ export default function EventForm({
   onEventLocationChange,
   disabled = false,
   title = '試合情報',
-}: EventFormProps) {
+}: EventFormProps) => {
   // 今日の日付をYYYY-MM-DD形式で取得
   const getTodayDate = () => {
     const today = new Date();
@@ -80,4 +80,6 @@ export default function EventForm({
       </Stack>
     </Paper>
   );
-}
+};
+
+export default EventForm;

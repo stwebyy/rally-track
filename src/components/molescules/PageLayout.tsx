@@ -3,10 +3,25 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
+import dynamic from 'next/dynamic';
 import { useAuth, useSidebar } from '@/hooks';
 import CustomAppBar from '@/components/atoms/CustomAppBar';
 import Sidebar, { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '@/components/atoms/Sidebar';
-import LoadingSpinner from '@/components/atoms/LoadingSpinner';
+
+// LoadingSpinnerを動的にインポート
+const LoadingSpinner = dynamic(() => import('@/components/atoms/LoadingSpinner'), {
+  ssr: false,
+  loading: () => (
+    <Box sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '50vh'
+    }}>
+      <div>Loading...</div>
+    </Box>
+  )
+});
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -14,11 +29,11 @@ interface PageLayoutProps {
   showLoading?: boolean;
 }
 
-export default function PageLayout({
+const PageLayout = ({
   children,
   title = 'Rally Track',
   showLoading = true
-}: PageLayoutProps) {
+}: PageLayoutProps) => {
   const { user, loading } = useAuth();
   const {
     isDesktop,
@@ -81,4 +96,6 @@ export default function PageLayout({
       </Box>
     </Box>
   );
-}
+};
+
+export default PageLayout;

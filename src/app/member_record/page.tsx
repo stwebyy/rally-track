@@ -42,7 +42,7 @@ interface GameRecord {
   opponent_sets: number;
 }
 
-export default function MemberRecordRanking() {
+const MemberRecordRanking = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [rankings, setRankings] = React.useState<MemberRanking[]>([]);
@@ -349,4 +349,6 @@ export default function MemberRecordRanking() {
       )}
     </PageLayout>
   );
-}
+};
+
+export default MemberRecordRanking;

@@ -20,6 +20,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -39,13 +40,13 @@ interface SidebarProps {
   user: User | null;
 }
 
-export default function Sidebar({
+const Sidebar = ({
   isOpen,
   isExpanded,
   isMobile,
   onClose,
   user, // eslint-disable-line @typescript-eslint/no-unused-vars
-}: SidebarProps) {
+}: SidebarProps) => {
   const router = useRouter();
   const supabase = createClient();
 
@@ -107,6 +108,11 @@ export default function Sidebar({
       text: '部内ランキング',
       icon: <LeaderboardIcon />,
       onClick: () => handleNavigation('/member_record'),
+    },
+    {
+      text: '動画一覧',
+      icon: <VideoLibraryIcon />,
+      onClick: () => handleNavigation('/youtube/videos'),
     },
   ];
 
@@ -316,6 +322,7 @@ export default function Sidebar({
       {drawerContent}
     </Drawer>
   );
-}
+};
 
+export default Sidebar;
 export { DRAWER_WIDTH, MINI_DRAWER_WIDTH };

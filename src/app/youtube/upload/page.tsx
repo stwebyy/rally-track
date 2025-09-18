@@ -663,9 +663,10 @@ const VideoUploadPage = () => {
         {mounted && (
           <Paper elevation={3} sx={{ p: 3 }}>
             <Alert severity="warning" sx={{ mb: 1 }}>
-              <Typography variant="body2" fontWeight="medium">
-                アップロードする際はブラウザを開きっぱなしにしてください
-              </Typography>
+                <ul>
+                  <li>動画選択後、しばらくそのままで待機する必要があるので注意してください</li>
+                  <li>アップロード中はブラウザを閉じないでください</li>
+                </ul>
             </Alert>
             <form onSubmit={handleSubmit}>
             {/* 動画ファイル選択 */}

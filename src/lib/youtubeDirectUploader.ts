@@ -16,7 +16,7 @@ export class YouTubeDirectUploader {
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1秒
   private static readonly PROGRESS_UPDATE_INTERVAL = 10000; // 10秒（プログレス更新間隔）
-  private static readonly CHUNK_UPLOAD_INTERVAL = 1000; // 1秒（チャンクアップロード間隔）
+  private static readonly CHUNK_UPLOAD_INTERVAL = 500; // 0.5秒（チャンクアップロード間隔 - 高速化）
 
   private progressCallback?: (progress: UploadProgress) => void;
   private abortController?: AbortController;

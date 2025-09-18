@@ -363,6 +363,64 @@ export async function GET(request: NextRequest) {
     console.log(`- Internal match videos: ${formatInternalVideos.length}`);
     console.log(`- Standalone videos: ${(standaloneMovies || []).length - (formatExternalVideos.length + formatInternalVideos.length)}`);
 
+    // アップロードセッションからの動画も取得
+    const { data: uploadSessions, error: uploadError } = await supabase
+      .from('upload_sessions')
+      .select(`
+        id,
+        youtube_video_id,
+        video_id_status,
+        metadata,
+        created_at,
+        status
+      `)
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false });
+
+    if (uploadError) {
+      console.error('Error fetching upload sessions:', uploadError);
+    } else if (uploadSessions && uploadSessions.length > 0) {
+      console.log(`Found ${uploadSessions.length} upload sessions`);
+
+      // アップロードセッションを動画形式に変換
+      const uploadVideos = uploadSessions
+        .map(session => {
+          try {
+            const metadata = session.metadata as Record<string, unknown>;
+            const isPlaceholder = session.youtube_video_id?.startsWith('placeholder_') || session.video_id_status === 'placeholder';
+
+            return {
+              id: `upload_${session.id}`,
+              title: (typeof metadata?.title === 'string' ? metadata.title : null) || 'Untitled Video',
+              youtube_url: isPlaceholder
+                ? '#'
+                : `https://www.youtube.com/watch?v=${session.youtube_video_id}`,
+              created_at: session.created_at,
+              match_date: session.created_at,
+              match_type: 'standalone' as const,
+              // プレースホルダー用の追加データ
+              videoId: session.youtube_video_id,
+              videoIdStatus: session.video_id_status,
+              sessionId: session.id,
+            };
+          } catch (error) {
+            console.error('Error processing upload session:', session.id, error);
+            return null;
+          }
+        })
+        .filter((video): video is NonNullable<typeof video> => video !== null);
+
+      // 重複を除去（既存の動画と重複する場合は既存を優先）
+      const existingUrls = new Set(allVideos.map(v => v.youtube_url));
+      const newUploadVideos = uploadVideos.filter(v => !existingUrls.has(v.youtube_url));
+
+      allVideos.push(...newUploadVideos);
+      allVideos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      console.log(`Added ${newUploadVideos.length} upload session videos`);
+    };
+
     const response = {
       videos: allVideos,
       count: allVideos.length

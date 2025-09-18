@@ -1,5 +1,7 @@
 // YouTube直接アップロード関連の型定義
 
+export type VideoIdStatus = 'completed' | 'placeholder' | 'manual' | 'failed';
+
 export interface UploadSession {
   id: string;
   user_id: string;
@@ -10,6 +12,7 @@ export interface UploadSession {
   uploaded_bytes: number;
   status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'expired';
   youtube_video_id: string | null;
+  video_id_status: VideoIdStatus;
   metadata: VideoMetadata;
   error_message: string | null;
   expires_at: string;

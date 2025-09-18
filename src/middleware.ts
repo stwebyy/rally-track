@@ -10,6 +10,11 @@ export async function middleware(request: NextRequest) {
   // 現在のパスを取得
   const { pathname } = request.nextUrl
 
+  // APIルートの場合は認証チェックをスキップ（API内で個別に認証を行う）
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
   // パブリックルートの場合は通常のセッション更新のみ
   if (publicRoutes.includes(pathname)) {
     return await updateSession(request)

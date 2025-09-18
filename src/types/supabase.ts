@@ -431,6 +431,7 @@ export type Database = {
           updated_at: string | null
           uploaded_bytes: number
           user_id: string
+          video_id_status: string | null
           youtube_session_id: string
           youtube_upload_url: string | null
           youtube_video_id: string
@@ -447,6 +448,7 @@ export type Database = {
           updated_at?: string | null
           uploaded_bytes?: number
           user_id: string
+          video_id_status?: string | null
           youtube_session_id: string
           youtube_upload_url?: string | null
           youtube_video_id: string
@@ -463,6 +465,7 @@ export type Database = {
           updated_at?: string | null
           uploaded_bytes?: number
           user_id?: string
+          video_id_status?: string | null
           youtube_session_id?: string
           youtube_upload_url?: string | null
           youtube_video_id?: string

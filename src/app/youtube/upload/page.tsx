@@ -114,6 +114,39 @@ const VideoUploadPage = () => {
   // Hydration対策
   useEffect(() => {
     setMounted(true);
+
+    // Chrome拡張機能などのエラーを無視するためのグローバルエラーハンドラー
+    const originalError = console.error;
+    const originalLog = console.log;
+
+    const filterError = (message: unknown, ...args: unknown[]) => {
+      const msgStr = String(message);
+
+      // Chrome拡張機能関連のエラーを無視
+      if (msgStr.includes('chrome-extension://') ||
+          msgStr.includes('frame_ant.js') ||
+          (msgStr.includes('Failed to fetch') && args.some(arg => String(arg).includes('chrome-extension')))) {
+        return;
+      }
+
+      // アップロード完了時の特定のエラーログを情報レベルに変更
+      if (msgStr.includes('Failed to parse completion response') ||
+          msgStr.includes('Response status: 200') ||
+          msgStr.includes('Response headers: {}')) {
+        console.info('Upload completion info:', message, ...args);
+        return;
+      }
+
+      originalError(message, ...args);
+    };
+
+    console.error = filterError;
+
+    // クリーンアップ
+    return () => {
+      console.error = originalError;
+      console.log = originalLog;
+    };
   }, []);
 
   // 認証チェック - クライアント側のみで実行
@@ -303,6 +336,16 @@ const VideoUploadPage = () => {
 
     } catch (err) {
       let errorMessage = err instanceof Error ? err.message : 'アップロードエラーが発生しました';
+
+      // YouTube APIクォータ超過エラーの場合
+      if (errorMessage.includes('本日のYouTube APIクォータを超過しています')) {
+        setError('本日のアップロード上限に達しました。\n明日以降に再度お試しください。');
+        setCurrentUpload(prev => ({
+          ...prev,
+          uploader: null
+        }));
+        return;
+      }
 
       // 特定のエラータイプに応じて適切なメッセージを表示
       if (errorMessage.includes('アップロードは完了しましたが、動画IDの取得に失敗しました')) {

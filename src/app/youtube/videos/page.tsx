@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/molescules/PageLayout';
 import VideoThumbnailCard from '@/components/molescules/VideoThumbnailCard';
+import { useVideoSync } from '@/hooks/api/useVideoSync';
 
 type SimpleVideo = {
   id: string;
@@ -28,11 +29,15 @@ type SimpleVideo = {
   created_at: string;
   match_date: string;
   match_type: 'external' | 'internal' | 'standalone';
+  videoId?: string;
+  videoIdStatus?: string;
+  sessionId?: string;
 }
 
 const VideosPage = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { syncVideo, isSyncing } = useVideoSync();
 
   const [videos, setVideos] = useState<SimpleVideo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,41 +46,7 @@ const VideosPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // ページネーション用のデータ計算
-  const paginatedVideos = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return videos.slice(startIndex, startIndex + itemsPerPage);
-  }, [videos, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(videos.length / itemsPerPage);
-
-  // ページ変更ハンドラ
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
-    // ページ変更時にトップにスクロール
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Hydration対策
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // 認証チェック
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/signin');
-    }
-  }, [user, authLoading, router]);
-
-  // 動画一覧を取得
-  useEffect(() => {
-    if (user && mounted) {
-      fetchVideos();
-    }
-  }, [user, mounted]);
-
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -114,7 +85,54 @@ const VideosPage = () => {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // 同期処理のハンドラ
+  const handleSync = useCallback(async (sessionId: string) => {
+    const result = await syncVideo(sessionId);
+    if (result.success) {
+      // 成功時は動画一覧を再取得
+      await fetchVideos();
+    } else {
+      // エラー表示（実際のアプリでは適切な通知システムを使用）
+      setError(result.error || '同期に失敗しました');
+      setTimeout(() => setError(''), 5000);
+    }
+  }, [syncVideo, fetchVideos]);
+
+  // ページネーション用のデータ計算
+  const paginatedVideos = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return videos.slice(startIndex, startIndex + itemsPerPage);
+  }, [videos, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(videos.length / itemsPerPage);
+
+  // ページ変更ハンドラ
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+    // ページ変更時にトップにスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Hydration対策
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 認証チェック
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/signin');
+    }
+  }, [user, authLoading, router]);
+
+  // 動画一覧を取得
+  useEffect(() => {
+    if (user && mounted) {
+      fetchVideos();
+    }
+  }, [user, mounted, fetchVideos]);
 
   const handleUploadRedirect = useCallback(async () => {
     try {
@@ -236,6 +254,11 @@ const VideosPage = () => {
                     youtubeUrl={video.youtube_url}
                     matchDate={video.match_date}
                     matchType={video.match_type}
+                    videoId={video.videoId}
+                    videoIdStatus={video.videoIdStatus as 'completed' | 'placeholder' | 'manual' | 'failed'}
+                    sessionId={video.sessionId}
+                    onSync={handleSync}
+                    syncInProgress={video.sessionId ? isSyncing(video.sessionId) : false}
                   />
                   {/* 編集ボタンをカードの右上に配置 */}
                   <Box

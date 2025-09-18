@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId, youtubeVideoId } = await request.json();
+    const { sessionId, youtubeVideoId, videoIdStatus } = await request.json();
 
     // パラメータ検証
     if (!sessionId || !youtubeVideoId) {
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       .from('upload_sessions')
       .update({
         youtube_video_id: youtubeVideoId,
+        video_id_status: videoIdStatus || 'completed',
         status: 'completed',
         uploaded_bytes: session.file_size, // 完了時は全バイト
         updated_at: new Date().toISOString()

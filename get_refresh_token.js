@@ -23,7 +23,8 @@ const { google } = await import('googleapis');
 
   const SCOPES = [
     'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube'
+    'https://www.googleapis.com/auth/youtube',
+    'https://www.googleapis.com/auth/youtube.readonly'
   ];
 
   const authUrl = oauth2Client.generateAuthUrl({

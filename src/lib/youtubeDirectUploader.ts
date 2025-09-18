@@ -10,7 +10,8 @@ import { YouTubeQuotaTracker } from './youtubeQuotaTracker';
 import { FileMismatchError } from '@/types/upload-errors';
 
 export class YouTubeDirectUploader {
-  private static readonly CHUNK_SIZE = 2 * 1024 * 1024; // 2MB（高速化のため）
+  // 最適化されたチャンクサイズ（32MB）- YouTube APIの推奨に従い大きくして効率化
+  private static readonly CHUNK_SIZE = 32 * 1024 * 1024; // 32MB（最大効率化）
   private static readonly MIN_CHUNK_SIZE = 256 * 1024; // 256KB（最小サイズ）
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1秒

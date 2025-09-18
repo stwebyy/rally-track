@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
       .insert([
         {
           name: name.trim(),
-          auth_id: user.id
+          auth_id: user.id,
+          updated_at: new Date().toISOString()
         }
       ])
       .select()

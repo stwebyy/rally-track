@@ -262,11 +262,11 @@ export default function MemberRecord() {
     }
   }, [memberId, supabase]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 
-  const handleAccordionChange = (panelId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+  const handleAccordionChange = (panelId: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedAccordions(prev => {
       const newSet = new Set(prev);
       if (isExpanded) {

@@ -18,7 +18,6 @@ import MenuItem from '@mui/material/MenuItem';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { MatchGame } from '@/types/event';
-import { PLAYER_STYLES } from '@/types/constants';
 
 type Member = {
   id: number;

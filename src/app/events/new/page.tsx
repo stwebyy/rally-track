@@ -30,7 +30,6 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { createClient } from '@/utils/supabase/client';
-import { PLAYER_STYLES } from '@/types/constants';
 import PageLayout from '@/components/molescules/PageLayout';
 
 type MatchGame = {

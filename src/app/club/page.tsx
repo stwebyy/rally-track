@@ -155,7 +155,7 @@ export default function ClubMatchResults() {
         field: 'game_count',
         headerName: '部内試合数',
         width: 120,
-        valueGetter: (value, row) => {
+        valueGetter: (_value, row) => {
           return row.game_results?.length || 0;
         },
       },

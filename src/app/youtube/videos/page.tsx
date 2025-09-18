@@ -54,7 +54,7 @@ const VideosPage = () => {
   const totalPages = Math.ceil(videos.length / itemsPerPage);
 
   // ページ変更ハンドラ
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
     // ページ変更時にトップにスクロール
     window.scrollTo({ top: 0, behavior: 'smooth' });

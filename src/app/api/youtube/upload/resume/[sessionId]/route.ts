@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 export const maxDuration = 60;
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {

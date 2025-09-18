@@ -70,27 +70,26 @@ export async function POST(request: NextRequest) {
         const gameId = typeof gameResultId === 'number' ? gameResultId : parseInt(String(gameResultId));
 
         // gameIdが有効な数値かチェック
-        if (isNaN(gameId)) {
-          console.warn('Invalid gameResultId in metadata:', gameResultId);
-          return;
-        }
-
-        // 既存の試合結果テーブルを確認
-        const { data: gameResult } = await supabase
-          .from('match_games')
-          .select('id')
-          .eq('id', gameId)
-          .single();
-
-        if (gameResult) {
-          // 試合結果にYouTube動画IDを関連付け
-          await supabase
+        if (!isNaN(gameId)) {
+          // 既存の試合結果テーブルを確認
+          const { data: gameResult } = await supabase
             .from('match_games')
-            .update({
-              youtube_video_id: youtubeVideoId,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', gameId);
+            .select('id')
+            .eq('id', gameId)
+            .single();
+
+          if (gameResult) {
+            // 試合結果にYouTube動画IDを関連付け
+            await supabase
+              .from('match_games')
+              .update({
+                youtube_video_id: youtubeVideoId,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', gameId);
+          }
+        } else {
+          console.warn('Invalid gameResultId in metadata:', gameResultId);
         }
       } catch (gameError) {
         console.error('Game result linking error:', gameError);

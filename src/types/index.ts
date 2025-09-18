@@ -18,6 +18,13 @@ export type {
   HaratakuGameResultWithDetails,
   VideoResponse,
   VideosListResponse,
+  GamePlayer,
+  ExternalGameData,
+  InternalGameData,
+  GameData,
+  ExternalMatchGameRaw,
+  HaratakuGameResultRaw,
+  HaratakuMemberSimple,
 } from './database';
 
 // Other existing types (名前競合を避けるため個別エクスポート)

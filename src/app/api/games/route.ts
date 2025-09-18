@@ -1,66 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-
-// ゲームデータの型定義
-type GamePlayer = {
-  name: string;
-};
-
-// Supabase クエリ結果の型定義
-type ExternalMatchGameRaw = {
-  id: string;
-  player_name: string | null;
-  opponent_player_name: string | null;
-  team_sets: number | null;
-  opponent_sets: number | null;
-  match_result_id: string;
-  youtube_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type HaratakuGameResultRaw = {
-  id: string;
-  player_id: string;
-  opponent_id: string;
-  player_game_set: number | null;
-  opponent_game_set: number | null;
-  harataku_match_result_id: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type HaratakuMember = {
-  id: string;
-  name: string;
-};
-
-type ExternalGameData = {
-  id: string;
-  player: GamePlayer;
-  opponent: GamePlayer;
-  player_game_set: number;
-  opponent_game_set: number;
-  external_match_result_id: string;
-  youtube_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type InternalGameData = {
-  id: string;
-  player: GamePlayer;
-  opponent: GamePlayer;
-  player_game_set: number;
-  opponent_game_set: number;
-  harataku_match_result_id: string;
-  created_at: string;
-  updated_at: string;
-  player_id: string;
-  opponent_id: string;
-};
-
-type GameData = ExternalGameData | InternalGameData;
+import {
+  GetGamesRequestSchema,
+  GetGamesResponseSchema,
+  type GetGamesResponse,
+  type ErrorResponse,
+  type ExternalGameData,
+  type InternalGameData,
+} from '@/schemas/api';
+import {
+  ExternalMatchGameRaw,
+  HaratakuGameResultRaw,
+  HaratakuMemberSimple
+} from '@/types';
 
 export async function GET(request: NextRequest) {
   console.log('=== Games API called ===');
@@ -72,29 +24,36 @@ export async function GET(request: NextRequest) {
 
     if (authError || !user) {
       console.log('Authentication failed:', authError);
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      const errorResponse: ErrorResponse = { error: 'Unauthorized' };
+      return NextResponse.json(errorResponse, { status: 401 });
     }
 
     console.log('User authenticated:', user.id);
 
-    // URLパラメータを取得
+    // URLパラメータを取得してバリデーション
     const { searchParams } = new URL(request.url);
-    const matchType = searchParams.get('type'); // 'external' or 'internal'
-    const matchId = searchParams.get('matchId');
+    const requestParams = {
+      type: searchParams.get('type'),
+      matchId: searchParams.get('matchId'),
+    };
 
-    console.log('Request parameters:', { matchType, matchId });
+    console.log('Request parameters:', requestParams);
 
-    if (!matchType || !matchId) {
-      return NextResponse.json(
-        { error: 'Match type and match ID are required' },
-        { status: 400 }
-      );
+    // Zodスキーマでバリデーション
+    const validationResult = GetGamesRequestSchema.safeParse(requestParams);
+
+    if (!validationResult.success) {
+      console.log('Validation failed:', validationResult.error.flatten());
+      const errorResponse: ErrorResponse = {
+        error: 'Invalid request parameters',
+        message: validationResult.error.issues.map(e => e.message).join(', ')
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    let gamesData: GameData[] = [];
+    const { type: matchType, matchId } = validationResult.data;
+
+    let gamesData: (ExternalGameData | InternalGameData)[] = [];
 
     if (matchType === 'external') {
       // 対外試合のゲーム情報を取得
@@ -113,23 +72,24 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error('External games fetch error:', error);
-        return NextResponse.json(
-          { error: 'Failed to fetch external games', details: error.message },
-          { status: 500 }
-        );
+        const errorResponse: ErrorResponse = {
+          error: 'Failed to fetch external games',
+          message: error.message
+        };
+        return NextResponse.json(errorResponse, { status: 500 });
       }
 
       // 外部試合データを適切な形式に変換
       gamesData = (data || []).map((game: ExternalMatchGameRaw): ExternalGameData => ({
         id: game.id,
-        player: { name: game.player_name || '不明' },
-        opponent: { name: game.opponent_player_name || '不明' },
-        player_game_set: game.team_sets || 0,
-        opponent_game_set: game.opponent_sets || 0,
-        external_match_result_id: game.match_result_id,
+        player_name: game.player_name,
+        opponent_player_name: game.opponent_player_name,
+        team_sets: game.team_sets,
+        opponent_sets: game.opponent_sets,
+        match_result_id: game.match_result_id,
         youtube_url: game.youtube_url,
         created_at: game.created_at,
-        updated_at: game.updated_at
+        updated_at: game.updated_at,
       }));
 
     } else if (matchType === 'internal') {
@@ -158,10 +118,11 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error('Harataku games fetch error:', error);
-        return NextResponse.json(
-          { error: 'Failed to fetch harataku games', details: error.message },
-          { status: 500 }
-        );
+        const errorResponse: ErrorResponse = {
+          error: 'Failed to fetch harataku games',
+          message: error.message
+        };
+        return NextResponse.json(errorResponse, { status: 500 });
       }
 
       // 選手名を別途取得
@@ -183,20 +144,27 @@ export async function GET(request: NextRequest) {
 
         if (membersError) {
           console.error('Members fetch error:', membersError);
-          return NextResponse.json(
-            { error: 'Failed to fetch member names', details: membersError.message },
-            { status: 500 }
-          );
+          const errorResponse: ErrorResponse = {
+            error: 'Failed to fetch member names',
+            message: membersError.message
+          };
+          return NextResponse.json(errorResponse, { status: 500 });
         }
 
-        const memberMap = new Map(members?.map((m: HaratakuMember) => [m.id, m.name]) || []);
+        const memberMap = new Map(members?.map((m: HaratakuMemberSimple) => [m.id, m.name]) || []);
 
         gamesData = data.map((game: HaratakuGameResultRaw): InternalGameData => ({
           id: game.id,
-          player: { name: memberMap.get(game.player_id) || '不明' },
-          opponent: { name: memberMap.get(game.opponent_id) || '不明' },
-          player_game_set: game.player_game_set || 0,
-          opponent_game_set: game.opponent_game_set || 0,
+          player: {
+            id: game.player_id,
+            name: memberMap.get(game.player_id) || '不明'
+          },
+          opponent: {
+            id: game.opponent_id,
+            name: memberMap.get(game.opponent_id) || '不明'
+          },
+          player_game_set: game.player_game_set,
+          opponent_game_set: game.opponent_game_set,
           harataku_match_result_id: game.harataku_match_result_id,
           created_at: game.created_at,
           updated_at: game.updated_at,
@@ -207,24 +175,28 @@ export async function GET(request: NextRequest) {
         gamesData = [];
       }
     } else {
-      return NextResponse.json(
-        { error: 'Invalid match type. Must be "external" or "internal"' },
-        { status: 400 }
-      );
+      const errorResponse: ErrorResponse = {
+        error: 'Invalid match type. Must be "external" or "internal"'
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     console.log('Returning games data:', { count: gamesData.length });
 
-    return NextResponse.json({
-      success: true,
-      data: gamesData
-    });
+    // レスポンスデータをZodスキーマでバリデーション
+    const responseData: GetGamesResponse = {
+      games: gamesData,
+      total: gamesData.length,
+      type: matchType,
+    };
+
+    // バリデーションしてからレスポンス
+    const validatedResponse = GetGamesResponseSchema.parse(responseData);
+    return NextResponse.json(validatedResponse);
 
   } catch (error) {
     console.error('Unexpected error in games API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    const errorResponse: ErrorResponse = { error: 'Internal server error' };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }

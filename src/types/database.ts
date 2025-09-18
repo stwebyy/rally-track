@@ -147,6 +147,69 @@ export type VideosListResponse = {
   count: number;
 };
 
+// ===== Game API Types =====
+
+export type GamePlayer = {
+  name: string;
+};
+
+export type ExternalGameData = {
+  id: string;
+  player: GamePlayer;
+  opponent: GamePlayer;
+  player_game_set: number;
+  opponent_game_set: number;
+  external_match_result_id: string;
+  youtube_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InternalGameData = {
+  id: string;
+  player: GamePlayer;
+  opponent: GamePlayer;
+  player_game_set: number;
+  opponent_game_set: number;
+  harataku_match_result_id: string;
+  created_at: string;
+  updated_at: string;
+  player_id: string;
+  opponent_id: string;
+};
+
+export type GameData = ExternalGameData | InternalGameData;
+
+// ===== Raw Database Query Result Types =====
+
+export type ExternalMatchGameRaw = {
+  id: string;
+  player_name: string | null;
+  opponent_player_name: string | null;
+  team_sets: number | null;
+  opponent_sets: number | null;
+  match_result_id: string;
+  youtube_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HaratakuGameResultRaw = {
+  id: string;
+  player_id: string;
+  opponent_id: string;
+  player_game_set: number | null;
+  opponent_game_set: number | null;
+  harataku_match_result_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HaratakuMemberSimple = {
+  id: string;
+  name: string;
+};
+
 // ===== Insert Types (for database operations) =====
 
 export type GameMovieInsert = Omit<GameMovie, 'id' | 'created_at' | 'updated_at'>;

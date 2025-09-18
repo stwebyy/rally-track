@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import {
   Box,
   Paper,
-  Typography,
   TextField,
   Button,
   Radio,
@@ -20,6 +18,7 @@ import {
   CardContent,
   IconButton,
   InputLabel,
+  Typography,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -30,7 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/molescules/PageLayout';
 import { UploadProgressUI } from '@/components';
-import { useUploadResume } from '@/hooks/useUploadResume';
+
 import { YouTubeDirectUploader } from '@/lib/youtubeDirectUploader';
 import {
   VideoMetadata,
@@ -43,17 +42,6 @@ import {
   HaratakuMatchResult,
   YOUTUBE_CATEGORIES,
 } from '@/types/youtube';
-import { FileMismatchError } from '@/types/upload-errors';
-import { ErrorHandler } from '@/utils/errorHandler';
-
-// 動的インポートでHydration問題を回避
-const UploadResumeDialog = dynamic(
-  () => import('@/components').then((mod) => ({ default: mod.UploadResumeDialog })),
-  {
-    ssr: false,
-    loading: () => null
-  }
-);
 
 // Games APIから返される実際のデータ型
 type GamePlayerInfo = {
@@ -111,13 +99,7 @@ const VideoUploadPage = () => {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [videoError, setVideoError] = useState<string>('');
-  const [fileMismatchError, setFileMismatchError] = useState<{
-    message: string;
-    sessionId: string;
-  } | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [showResumeDialog, setShowResumeDialog] = useState(false);
-  const [checkCompleted, setCheckCompleted] = useState(false);
 
   // マッチデータ
   const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
@@ -128,22 +110,6 @@ const VideoUploadPage = () => {
   // ローディング状態
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
-
-  // 自動再開フック - アップロード実行時のみ有効化
-  const {
-    pendingSessions,
-    clearSession,
-    hasResumableSessions,
-    checkPendingSessions
-  } = useUploadResume({
-    onSessionFound: (sessions) => {
-      if (mounted && sessions.length > 0) {
-        setShowResumeDialog(true);
-      }
-    },
-    autoCheck: false, // 自動チェックを無効化
-    checkInterval: 0 // ポーリング無効化
-  });
 
   // Hydration対策
   useEffect(() => {
@@ -163,13 +129,6 @@ const VideoUploadPage = () => {
       fetchMatches();
     }
   }, [mounted, user]);
-
-  // 未完了セッションの状態変更時にチェック完了状態をリセット
-  useEffect(() => {
-    if (hasResumableSessions) {
-      setCheckCompleted(false);
-    }
-  }, [hasResumableSessions]);
 
   // マッチ選択時にゲームデータを読み込み
   useEffect(() => {
@@ -256,7 +215,6 @@ const VideoUploadPage = () => {
       setFormData(prev => ({ ...prev, video: file }));
       setVideoError('');
       setError('');
-      setFileMismatchError(null);
     }
   };
 
@@ -264,14 +222,12 @@ const VideoUploadPage = () => {
     setFormData(prev => ({ ...prev, video: null }));
     setVideoError('');
     setError('');
-    setFileMismatchError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setSuccess('');
-    setFileMismatchError(null);
 
     if (!formData.video) {
       setVideoError('動画ファイルを選択してください');
@@ -290,9 +246,6 @@ const VideoUploadPage = () => {
     }
 
     try {
-      // アップロード開始前に未完了セッションをチェック
-      await checkPendingSessions();
-
       // アップロードメタデータ作成
       const metadata: VideoMetadata = {
         title: formData.title,
@@ -351,6 +304,30 @@ const VideoUploadPage = () => {
     } catch (err) {
       let errorMessage = err instanceof Error ? err.message : 'アップロードエラーが発生しました';
 
+      // 特定のエラータイプに応じて適切なメッセージを表示
+      if (errorMessage.includes('アップロードは完了しましたが、動画IDの取得に失敗しました')) {
+        // アップロード成功だが ID取得失敗のケース
+        setSuccess('⚠️ アップロードは完了しました！\n' +
+                  'ただし、技術的な理由により動画IDの取得に失敗しました。\n' +
+                  'YouTubeの管理画面（YouTube Studio）でアップロードされた動画を確認してください。');
+
+        // フォームをリセット（成功扱い）
+        setFormData({
+          video: null,
+          title: '',
+          description: '',
+          matchType: undefined,
+          matchResultId: undefined,
+          gameResultId: undefined,
+        });
+
+        setTimeout(() => {
+          router.push('/youtube/videos');
+        }, 5000);
+
+        return; // エラーとして扱わない
+      }
+
       // CORSエラーの場合、より分かりやすいメッセージに変更
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS')) {
         errorMessage = 'ネットワーク接続エラーが発生しました。\n' +
@@ -364,122 +341,6 @@ const VideoUploadPage = () => {
         uploader: null
       }));
     }
-  };
-
-  // 再開処理
-  const handleResumeUpload = async (sessionId: string) => {
-    try {
-      setShowResumeDialog(false);
-      setError('');
-      setFileMismatchError(null);
-
-      // アップロード再開の説明ダイアログを表示
-      const confirmResult = window.confirm(
-        'アップロードを再開するには、元の動画ファイルを選択する必要があります。\n' +
-        '次の画面で、中断されたアップロードと同じ動画ファイルを選択してください。\n\n' +
-        '続行しますか？'
-      );
-
-      if (!confirmResult) {
-        return;
-      }
-
-      // ファイル選択を求める
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'video/*';
-
-      const selectedFile = await new Promise<File | null>((resolve) => {
-        fileInput.addEventListener('change', (e) => {
-          const file = (e.target as HTMLInputElement).files?.[0];
-          resolve(file || null);
-        });
-
-        fileInput.addEventListener('cancel', () => {
-          resolve(null);
-        });
-
-        fileInput.click();
-      });
-
-      if (!selectedFile) {
-        setError('ファイルが選択されませんでした。再開をキャンセルします。');
-        return;
-      }
-
-      const uploader = new YouTubeDirectUploader((progress) => {
-        setCurrentUpload(prev => ({
-          ...prev,
-          progress
-        }));
-      });
-
-      setCurrentUpload(prev => ({
-        ...prev,
-        uploader
-      }));
-
-      // ErrorHandlerを使用してFileMismatchErrorを安全に処理
-      const result = await ErrorHandler.safeAsyncCall(
-        () => uploader.resumeUpload(sessionId, selectedFile),
-        // FileMismatchErrorハンドラ
-        (error: FileMismatchError) => {
-          setFileMismatchError({
-            message: error.message,
-            sessionId: sessionId
-          });
-          setError('');
-        },
-        // その他のエラーハンドラ
-        (error: Error) => {
-          setError(`アップロード再開に失敗しました: ${error.message}`);
-          setFileMismatchError(null);
-        }
-      );
-
-      if (result) {
-        // CORSエラー回復の場合の特別なメッセージ
-        if (result === 'upload_completed_cors_error' || result === 'upload_completed_cors_recovery') {
-          setSuccess(`アップロードが完了しました！\n（※技術的な理由によりVideo IDを取得できませんでしたが、アップロードは成功しています）`);
-        } else {
-          setSuccess(`アップロードが完了しました！YouTube Video ID: ${result}`);
-        }
-        setCurrentUpload({
-          session: null,
-          progress: null,
-          uploader: null
-        });
-      } else {
-        // エラーが処理された場合、uploaderをクリア
-        setCurrentUpload(prev => ({
-          ...prev,
-          uploader: null
-        }));
-      }
-
-    } catch (err) {
-      // 予期しないエラーの処理
-      let errorMessage = err instanceof Error ? err.message : '予期しないエラーが発生しました';
-
-      // CORSエラーの場合、より分かりやすいメッセージに変更
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS')) {
-        errorMessage = 'ネットワーク接続エラーが発生しました。\n' +
-                     'ブラウザ拡張機能による干渉の可能性があります。\n' +
-                     '再度お試しいただくか、別のブラウザをご利用ください。';
-      }
-
-      setError(`アップロード再開に失敗しました: ${errorMessage}`);
-      setFileMismatchError(null);
-      setCurrentUpload(prev => ({
-        ...prev,
-        uploader: null
-      }));
-    }
-  };
-
-  // セッション削除処理
-  const handleDeleteSession = async (sessionId: string) => {
-    await clearSession(sessionId);
   };
 
   // アップロードキャンセル
@@ -543,52 +404,6 @@ const VideoUploadPage = () => {
           動画アップロード
         </Typography>
 
-        {/* 未完了セッション警告 - クライアントマウント後のみ表示 */}
-        {mounted && (
-          <Box sx={{ mb: 3 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={async () => {
-                setCheckCompleted(false); // リセット
-                await checkPendingSessions();
-                setCheckCompleted(true);
-
-                // 成功メッセージを3秒後に自動で非表示にする
-                if (!hasResumableSessions) {
-                  setTimeout(() => {
-                    setCheckCompleted(false);
-                  }, 3000);
-                }
-              }}
-              sx={{ mb: hasResumableSessions ? 2 : 0 }}
-            >
-              未完了のアップロードをチェック
-            </Button>
-
-            {hasResumableSessions && (
-              <Alert severity="info">
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Typography>未完了のアップロードがあります。</Typography>
-                  <Button
-                    size="small"
-                    onClick={() => setShowResumeDialog(true)}
-                    startIcon={<CloudUploadIcon />}
-                  >
-                    続きから再開
-                  </Button>
-                </Box>
-              </Alert>
-            )}
-
-            {checkCompleted && !hasResumableSessions && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                未完了のアップロードはありません。
-              </Alert>
-            )}
-          </Box>
-        )}
-
         {/* 現在のアップロード進行状況 - クライアントマウント後のみ表示 */}
         {mounted && currentUpload.uploader && (
           <Box mb={3}>
@@ -604,43 +419,6 @@ const VideoUploadPage = () => {
         {/* エラー・成功メッセージ - クライアントマウント後のみ表示 */}
         {mounted && (
           <>
-            {/* ファイル不整合エラー */}
-            {fileMismatchError && (
-              <Alert
-                severity="error"
-                sx={{ mb: 2 }}
-                action={
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      color="inherit"
-                      size="small"
-                      onClick={() => handleResumeUpload(fileMismatchError.sessionId)}
-                    >
-                      再選択
-                    </Button>
-                    <Button
-                      color="inherit"
-                      size="small"
-                      onClick={() => setFileMismatchError(null)}
-                    >
-                      閉じる
-                    </Button>
-                  </Box>
-                }
-              >
-                <Typography variant="h6" gutterBottom>
-                  ❌ ファイルが一致しません
-                </Typography>
-                <Box component="div" sx={{ whiteSpace: 'pre-line', mb: 2 }}>
-                  {fileMismatchError.message}
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  💡 <strong>解決方法:</strong> 中断されたアップロードと同じ動画ファイルを選択してください。
-                  ファイル名とサイズが完全に一致する必要があります。
-                </Typography>
-              </Alert>
-            )}
-
             {/* 一般エラー */}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -907,17 +685,6 @@ const VideoUploadPage = () => {
             リンクを知っている人のみ視聴できます。
           </Typography>
         </Alert>
-
-        {/* 再開ダイアログ - クライアントマウント後のみレンダリング */}
-        {mounted && (
-          <UploadResumeDialog
-            open={showResumeDialog}
-            sessions={pendingSessions}
-            onClose={() => setShowResumeDialog(false)}
-            onResume={handleResumeUpload}
-            onDelete={handleDeleteSession}
-          />
-        )}
       </Box>
     </PageLayout>
   );

@@ -662,6 +662,11 @@ const VideoUploadPage = () => {
         {/* メインコンテンツ - マウント後のみ表示 */}
         {mounted && (
           <Paper elevation={3} sx={{ p: 3 }}>
+            <Alert severity="warning" sx={{ mb: 1 }}>
+              <Typography variant="body2" fontWeight="medium">
+                アップロードする際はブラウザを開きっぱなしにしてください
+              </Typography>
+            </Alert>
             <form onSubmit={handleSubmit}>
             {/* 動画ファイル選択 */}
             <Box mb={3}>
@@ -674,14 +679,14 @@ const VideoUploadPage = () => {
                   sx={{
                     border: '2px dashed #ccc',
                     borderRadius: 2,
-                    p: 4,
+                    p: 3,
                     textAlign: 'center',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: 200,
+                    minHeight: 120,
                     '&:hover': {
                       borderColor: 'primary.main',
                       backgroundColor: 'action.hover',
@@ -697,11 +702,11 @@ const VideoUploadPage = () => {
                     disabled={!!currentUpload.uploader}
                     style={{ display: 'none' }}
                   />
-                  <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">
+                  <CloudUploadIcon sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }} />
+                  <Typography variant="subtitle1" color="text.secondary">
                     動画ファイルを選択またはドラッグ&ドロップ
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     MP4, MOV, AVI形式に対応
                   </Typography>
                 </Box>
@@ -808,7 +813,7 @@ const VideoUploadPage = () => {
                   <FormControlLabel
                     value="harataku"
                     control={<Radio />}
-                    label="内部試合（原宅）"
+                    label="部内試合"
                     disabled={!!currentUpload.uploader}
                   />
                 </RadioGroup>

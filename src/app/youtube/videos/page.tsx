@@ -8,22 +8,18 @@ import {
   Button,
   LinearProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
   Pagination,
+  Fab,
 } from '@mui/material';
 import {
   VideoLibrary as VideoLibraryIcon,
   CloudUpload as CloudUploadIcon,
-  OpenInNew as OpenInNewIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/molescules/PageLayout';
+import VideoThumbnailCard from '@/components/molescules/VideoThumbnailCard';
 
 type SimpleVideo = {
   id: string;
@@ -118,10 +114,6 @@ const VideosPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const openYouTubeVideo = (url: string) => {
-    window.open(url, '_blank');
   };
 
   const handleUploadRedirect = useCallback(async () => {
@@ -223,110 +215,59 @@ const VideosPage = () => {
             </Button>
           </Paper>
         ) : (
-          <Paper sx={{ p: { xs: 1, sm: 2 } }}>
-            <List>
-              {paginatedVideos.map((video, index) => (
-                <React.Fragment key={video.id}>
-                  <ListItem
+          <Box>
+            {/* 動画グリッド */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)',
+                },
+                gap: { xs: 2, sm: 3 },
+                mb: 3
+              }}
+            >
+              {paginatedVideos.map((video) => (
+                <Box key={video.id} sx={{ position: 'relative' }}>
+                  <VideoThumbnailCard
+                    title={video.title}
+                    youtubeUrl={video.youtube_url}
+                    matchDate={video.match_date}
+                    matchType={video.match_type}
+                  />
+                  {/* 編集ボタンをカードの右上に配置 */}
+                  <Box
                     sx={{
-                      flexDirection: 'row',
-                      alignItems: { xs: 'flex-start', sm: 'center' },
-                      gap: { xs: 1, sm: 0 },
-                      pt: { xs: 2, sm: 1 },
-                      pb: { xs: 0, sm: 1 }
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1
                     }}
                   >
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      flex: 1,
-                      width: { xs: '100%', sm: 'auto' }
-                    }}>
-                      <ListItemIcon sx={{ minWidth: { xs: 40, sm: 56 } }}>
-                        <VideoLibraryIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={video.title}
-                        secondary={
-                          <>
-                            {video.match_type === 'external'
-                              ? '部外試合'
-                              : video.match_type === 'internal'
-                                ? '部内試合'
-                                : '一般動画'
-                            }
-                            <br />
-                            {new Date(video.match_date).toLocaleString('ja-JP')}
-                          </>
-                        }
-                        sx={{
-                          '& .MuiListItemText-primary': {
-                            fontSize: { xs: '0.875rem', sm: '1rem' },
-                            lineHeight: 1.4,
-                            display: '-webkit-box',
-                            WebkitBoxOrient: 'vertical',
-                            WebkitLineClamp: 3,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxHeight: { xs: '4.2em', sm: '4.2em' }
-                          },
-                          '& .MuiListItemText-secondary': {
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                          }
-                        }}
-                      />
-                    </Box>
-                    <Box sx={{
-                      display: 'flex',
-                      gap: { xs: 0.5, sm: 1 },
-                      flexDirection: { xs: 'column', sm: 'row' },
-                      flexShrink: 0,
-                      ml: { xs: 0, sm: 0 },
-                      minWidth: { xs: '90px', sm: 'auto' },
-                      maxWidth: { xs: '90px', sm: 'none' }
-                    }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={() => router.push(`/youtube/edit/${video.id.replace(/^(external_|internal_|standalone_)/, '')}`)}
-                        sx={{
-                          fontSize: { xs: '0.625rem', sm: '0.875rem' },
-                          px: { xs: 0.5, sm: 1.5 },
-                          py: { xs: 0.25, sm: 0.5 },
-                          minWidth: { xs: 'auto', sm: 'unset' },
-                          '& .MuiButton-startIcon': {
-                            marginRight: { xs: '4px', sm: '8px' },
-                            marginLeft: { xs: 0, sm: '-4px' }
-                          }
-                        }}
-                      >
-                        編集
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<OpenInNewIcon />}
-                        onClick={() => openYouTubeVideo(video.youtube_url)}
-                        sx={{
-                          fontSize: { xs: '0.625rem', sm: '0.875rem' },
-                          px: { xs: 0.5, sm: 1.5 },
-                          py: { xs: 0.25, sm: 0.5 },
-                          minWidth: { xs: 'auto', sm: 'unset' },
-                          '& .MuiButton-startIcon': {
-                            marginRight: { xs: '4px', sm: '8px' },
-                            marginLeft: { xs: 0, sm: '-4px' }
-                          }
-                        }}
-                      >
-                        YouTube
-                      </Button>
-                    </Box>
-                  </ListItem>
-                  {index < paginatedVideos.length - 1 && <Divider />}
-                </React.Fragment>
+                    <Fab
+                      size="small"
+                      color="primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/youtube/edit/${video.id.replace(/^(external_|internal_|standalone_)/, '')}`);
+                      }}
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        color: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 1)',
+                        },
+                        boxShadow: 2
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </Fab>
+                  </Box>
+                </Box>
               ))}
-            </List>
+            </Box>
 
             {/* ページネーション */}
             {videos.length > itemsPerPage && (
@@ -367,7 +308,7 @@ const VideosPage = () => {
                 </Typography>
               </>
             )}
-          </Paper>
+          </Box>
         )}
       </Box>
     </PageLayout>

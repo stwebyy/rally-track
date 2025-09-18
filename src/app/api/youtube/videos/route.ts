@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
           opponent_team_name,
           event_id,
           events!inner(
-            event_date
+            date
           )
         `)
         .in('id', matchResultIds);
@@ -146,8 +146,8 @@ export async function GET(request: NextRequest) {
 
       // 選手名を取得
       const playerIds = [...new Set([
-        ...externalGames.map(game => game.player_name_id).filter(Boolean),
-        ...externalGames.map(game => game.player_name_2_id).filter(Boolean)
+        ...externalGames.map(game => game.player_name_id).filter((id): id is number => id !== null),
+        ...externalGames.map(game => game.player_name_2_id).filter((id): id is number => id !== null)
       ])];
 
       const { data: players, error: playersError } = await supabase
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       externalVideos = externalGames.map(game => ({
         ...game,
         match_result: matchResultMap.get(game.match_result_id),
-        event_date: matchResultMap.get(game.match_result_id)?.events?.[0]?.event_date,
+        event_date: matchResultMap.get(game.match_result_id)?.events?.date,
         player_names: [
           playerMap.get(game.player_name_id) || '不明',
           game.player_name_2_id ? playerMap.get(game.player_name_2_id) : undefined
@@ -211,8 +211,8 @@ export async function GET(request: NextRequest) {
     if (internalGames && internalGames.length > 0) {
       // メンバー名を取得
       const playerIds = [...new Set([
-        ...internalGames.map(game => game.player_id),
-        ...internalGames.map(game => game.opponent_id)
+        ...internalGames.map(game => game.player_id).filter((id): id is number => typeof id === 'number' && id !== null),
+        ...internalGames.map(game => game.opponent_id).filter((id): id is number => typeof id === 'number' && id !== null)
       ])];
 
       const { data: members, error: membersError } = await supabase
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
         ...game,
         player: { name: memberMap.get(game.player_id) || '不明' },
         opponent: { name: memberMap.get(game.opponent_id) || '不明' },
-        match_date: game.harataku_match_results?.[0]?.date
+        match_date: game.harataku_match_results?.date
       })) as unknown as EnrichedInternalGame[];
     }
 

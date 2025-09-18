@@ -125,12 +125,15 @@ export default function EditEvent() {
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select('*')
-        .eq('id', eventId)
+        .eq('id', parseInt(eventId))
         .single();
 
       if (eventError) throw eventError;
 
-      setEvent(eventData);
+      setEvent({
+        ...eventData,
+        location: eventData.location || undefined
+      });
       setEventName(eventData.name);
       // 日付をYYYY-MM-DD形式に変換
       const formattedDate = eventData.date ? new Date(eventData.date).toISOString().split('T')[0] : '';
@@ -148,7 +151,7 @@ export default function EditEvent() {
             player_2:harataku_members!player_name_2_id(*)
           )
         `)
-        .eq('event_id', eventId)
+        .eq('event_id', parseInt(eventId))
         .order('id');
 
       if (matchError) throw matchError;
@@ -156,23 +159,32 @@ export default function EditEvent() {
       if (matchData && matchData.length > 0) {
         setMatchResults(matchData.map(match => ({
           ...match,
+          game_no: match.game_no || undefined,
+          notes: match.notes || undefined,
           match_games: (match.match_games || []).map((game: {
             id: number;
-            game_no: number;
+            game_no: number | null;
             player_name_id: number;
             opponent_player_name: string;
             team_sets: number;
             opponent_sets: number;
-            player_name_2_id?: number;
-            opponent_player_name_2?: string;
+            player_name_2_id?: number | null;
+            opponent_player_name_2?: string | null;
             is_doubles: boolean;
-            notes?: string;
-            player?: { name: string };
-            player_2?: { name: string };
+            notes?: string | null;
+            player?: { name: string } | null;
+            player_2?: { name: string } | null;
           }) => ({
             ...game,
+            game_no: game.game_no || 1,
+            player_name_id: game.player_name_id || 0,
+            player_name_2_id: game.player_name_2_id || undefined,
+            opponent_player_name_2: game.opponent_player_name_2 || undefined,
+            notes: game.notes || undefined,
             player_name: game.player?.name || '',
             player_name_2: game.player_2?.name || '',
+            player_style: '',
+            opponent_player_style: '',
           })),
         })));
       } else {
@@ -356,7 +368,7 @@ export default function EditEvent() {
           date: eventDate,
           location: eventLocation.trim() || null,
         })
-        .eq('id', eventId);
+        .eq('id', parseInt(eventId));
 
       if (eventError) throw eventError;
 
@@ -398,9 +410,9 @@ export default function EditEvent() {
           // Insert updated games
           if (match.match_games.length > 0) {
             const gamesToInsert = match.match_games.map((game: MatchGameExtended) => ({
-              match_result_id: match.id,
-              game_no: game.game_no,
-              player_name_id: getMemberIdByName(game.player_name || ''),
+              match_result_id: match.id!,
+              game_no: game.game_no || 1,
+              player_name_id: getMemberIdByName(game.player_name || '') || 1,
               opponent_player_name: game.opponent_player_name.trim(),
               opponent_player_style: '',
               team_sets: game.team_sets,
@@ -439,8 +451,8 @@ export default function EditEvent() {
           if (match.match_games.length > 0) {
             const gamesToInsert = match.match_games.map((game: MatchGameExtended) => ({
               match_result_id: newMatchData.id,
-              game_no: game.game_no,
-              player_name_id: getMemberIdByName(game.player_name || ''),
+              game_no: game.game_no || 1,
+              player_name_id: getMemberIdByName(game.player_name || '') || 1,
               opponent_player_name: game.opponent_player_name.trim(),
               opponent_player_style: '',
               team_sets: game.team_sets,

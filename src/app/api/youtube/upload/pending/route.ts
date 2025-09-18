@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
         ? Math.round((session.uploaded_bytes / session.file_size) * 100)
         : 0;
 
-      const isExpired = new Date() > new Date(session.expires_at);
+      const isExpired = session.expires_at
+        ? new Date() > new Date(session.expires_at)
+        : false; // expires_atがnullの場合は期限切れではないとみなす
 
       return {
         sessionId: session.id,

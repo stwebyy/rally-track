@@ -44,25 +44,24 @@ export const GamePlayerSchema = z.object({
 
 // 外部試合データ（実際のDBスキーマに合わせる）
 export const ExternalGameDataSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   player_name: z.string().nullable(),
   opponent_player_name: z.string().nullable(),
   team_sets: z.number().nullable(),
   opponent_sets: z.number().nullable(),
-  match_result_id: z.string(),
-  youtube_url: z.string().nullable(),
+  match_result_id: z.number(),
   created_at: z.string(),
   updated_at: z.string(),
 });
 
 // 内部試合データ（実際のDBスキーマに合わせる）
 export const InternalGameDataSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   player: GamePlayerSchema,
   opponent: GamePlayerSchema,
   player_game_set: z.number().nullable(),
   opponent_game_set: z.number().nullable(),
-  harataku_match_result_id: z.string(),
+  harataku_match_result_id: z.number(),
   created_at: z.string(),
   updated_at: z.string(),
   player_id: z.string(),

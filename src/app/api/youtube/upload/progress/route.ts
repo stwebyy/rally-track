@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // セッション期限確認
-    if (new Date() > new Date(session.expires_at)) {
+    if (session.expires_at && new Date() > new Date(session.expires_at)) {
       return NextResponse.json(
         { error: 'Session expired' },
         { status: 410 }

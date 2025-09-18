@@ -115,6 +115,10 @@ export default function ClubMatchResults() {
   const handleRowDelete = React.useCallback((result: MatchResultWithGameResults) => async () => {
     if (window.confirm(`${result.date}の部内試合結果を削除しますか？`)) {
       try {
+        if (!result.id) {
+          throw new Error('Invalid match result ID');
+        }
+
         const { error } = await supabase
           .from('harataku_match_results')
           .delete()

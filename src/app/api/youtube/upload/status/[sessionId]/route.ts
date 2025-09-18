@@ -22,7 +22,7 @@ export async function GET(
     const { data: session, error: sessionError } = await supabase
       .from('upload_sessions')
       .select('*')
-      .eq('id', sessionId)
+      .eq('id', parseInt(sessionId))
       .eq('user_id', user.id)
       .single();
 
@@ -39,9 +39,9 @@ export async function GET(
       : 0;
 
     // セッション期限確認
-    const isExpired = new Date() > new Date(session.expires_at);
+    const isExpired = session.expires_at ? new Date() > new Date(session.expires_at) : false;
     const actualStatus = isExpired && session.status !== 'completed'
-      ? 'expired'
+      ? 'failed'
       : session.status;
 
     // レスポンスデータ構築
@@ -67,11 +67,11 @@ export async function GET(
       await supabase
         .from('upload_sessions')
         .update({
-          status: 'expired',
+          status: 'failed',
           error_message: 'Session expired',
           updated_at: new Date().toISOString()
         })
-        .eq('id', sessionId)
+        .eq('id', parseInt(sessionId))
         .eq('user_id', user.id);
     }
 

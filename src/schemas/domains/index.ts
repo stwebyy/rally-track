@@ -7,7 +7,6 @@
 // All domain exports
 export * from './games';
 export * from './users';
-export * from './media';
 
 // Convenient re-exports for commonly used schemas
 // (Optional - for frequently used schemas only)
@@ -26,10 +25,3 @@ export {
   type RegisterRequest,
   type CreateMemberRequest,
 } from './users';
-
-export {
-  GetMoviesRequestSchema,
-  YouTubeUploadInitiateRequestSchema,
-  type GetMoviesRequest,
-  type YouTubeUploadInitiateRequest,
-} from './media';

@@ -41,7 +41,10 @@ export const ErrorResponseSchema = z.object({
 export const IdSchema = z.string().uuid('有効なIDを入力してください');
 export const EmailSchema = z.string().email('有効なメールアドレスを入力してください');
 export const DateTimeSchema = z.string().datetime('有効な日時を入力してください');
-export const UrlSchema = z.string().url('有効なURLを入力してください');
+
+// URL validation pattern
+const URL_REGEX = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)$/;
+export const UrlSchema = z.string().regex(URL_REGEX, '有効なURLを入力してください');
 
 // ===== Common Field Schemas =====
 export const TimestampSchema = z.object({

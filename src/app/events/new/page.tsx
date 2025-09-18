@@ -310,13 +310,15 @@ export default function NewEvent() {
           const gamesToInsert = match.match_games.map(game => ({
             match_result_id: matchResultData.id,
             game_no: game.game_no,
-            player_name_id: getMemberIdByName(game.player_name),
+            player_name_id: getMemberIdByName(game.player_name) || 1, // Default to 1 if null
             opponent_player_name: game.opponent_player_name.trim(),
+            opponent_player_style: 'R', // Default style
             team_sets: game.team_sets,
             opponent_sets: game.opponent_sets,
             is_doubles: game.is_doubles,
             player_name_2_id: game.player_name_2 ? getMemberIdByName(game.player_name_2) : null,
             opponent_player_name_2: game.opponent_player_name_2?.trim() || null,
+            opponent_player_style_2: null, // Can be null for singles
             notes: game.notes?.trim() || null,
           }));
 

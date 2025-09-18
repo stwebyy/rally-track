@@ -18,13 +18,11 @@ export {
   type GetGamesResponse,
   type LoginRequest,
   type CreateMemberRequest,
-  type GetMoviesRequest,
 
   // Most commonly used schema validators
   GetGamesRequestSchema,
   LoginRequestSchema,
   CreateMemberRequestSchema,
-  GetMoviesRequestSchema,
 } from './domains';
 
 // Common utilities re-export

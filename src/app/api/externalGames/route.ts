@@ -8,11 +8,6 @@ import {
   type ExternalGameData,
   type InternalGameData,
 } from '@/schemas/api';
-import {
-  ExternalMatchGameRaw,
-  HaratakuGameResultRaw,
-  HaratakuMemberSimple
-} from '@/types';
 
 export async function GET(request: NextRequest) {
   console.log('=== Games API called ===');
@@ -28,8 +23,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    console.log('User authenticated:', user.id);
-
     // URLパラメータを取得してバリデーション
     const { searchParams } = new URL(request.url);
     const requestParams = {
@@ -37,13 +30,10 @@ export async function GET(request: NextRequest) {
       matchId: searchParams.get('matchId'),
     };
 
-    console.log('Request parameters:', requestParams);
-
     // Zodスキーマでバリデーション
     const validationResult = GetGamesRequestSchema.safeParse(requestParams);
 
     if (!validationResult.success) {
-      console.log('Validation failed:', validationResult.error.flatten());
       const errorResponse: ErrorResponse = {
         error: 'Invalid request parameters',
         message: validationResult.error.issues.map(e => e.message).join(', ')
@@ -57,18 +47,11 @@ export async function GET(request: NextRequest) {
 
     if (matchType === 'external') {
       // 対外試合のゲーム情報を取得
-      console.log('Fetching external games for match ID:', matchId);
-
       const { data, error } = await supabase
-        .from('external_match_game_results')
+        .from('match_games')
         .select('*')
-        .eq('match_result_id', matchId)
+        .eq('match_result_id', parseInt(matchId))
         .order('created_at', { ascending: true });
-
-      console.log('External games query result:', {
-        data: data?.length || 0,
-        error: error?.message
-      });
 
       if (error) {
         console.error('External games fetch error:', error);
@@ -79,18 +62,43 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(errorResponse, { status: 500 });
       }
 
-      // 外部試合データを適切な形式に変換
-      gamesData = (data || []).map((game: ExternalMatchGameRaw): ExternalGameData => ({
-        id: game.id,
-        player_name: game.player_name,
-        opponent_player_name: game.opponent_player_name,
-        team_sets: game.team_sets,
-        opponent_sets: game.opponent_sets,
-        match_result_id: game.match_result_id,
-        youtube_url: game.youtube_url,
-        created_at: game.created_at,
-        updated_at: game.updated_at,
-      }));
+      // 外部試合データを適切な形式に変換（dataは自動的に型推論される）
+      if (data && data.length > 0) {
+        // 選手名を別途取得
+        const playerIds = [...new Set([
+          ...data.map((game) => game.player_name_id),
+          ...data.filter((game) => game.player_name_2_id).map((game) => game.player_name_2_id!)
+        ])];
+
+        const { data: members, error: membersError } = await supabase
+          .from('harataku_members')
+          .select('id, name')
+          .in('id', playerIds);
+
+        if (membersError) {
+          console.error('Members fetch error:', membersError);
+          const errorResponse: ErrorResponse = {
+            error: 'Failed to fetch member names',
+            message: membersError.message
+          };
+          return NextResponse.json(errorResponse, { status: 500 });
+        }
+
+        const memberMap = new Map(members?.map((m) => [m.id, m.name]) || []);
+
+        gamesData = data.map((game): ExternalGameData => ({
+          id: game.id,
+          player_name: memberMap.get(game.player_name_id) || '不明',
+          opponent_player_name: game.opponent_player_name,
+          team_sets: game.team_sets,
+          opponent_sets: game.opponent_sets,
+          match_result_id: game.match_result_id,
+          created_at: game.created_at,
+          updated_at: game.updated_at,
+        }));
+      } else {
+        gamesData = [];
+      }
 
     } else if (matchType === 'internal') {
       // 部内試合のゲーム情報を取得
@@ -108,13 +116,8 @@ export async function GET(request: NextRequest) {
           created_at,
           updated_at
         `)
-        .eq('harataku_match_result_id', matchId)
+        .eq('harataku_match_result_id', parseInt(matchId))
         .order('created_at', { ascending: true });
-
-      console.log('Internal games query result:', {
-        data: data?.length || 0,
-        error: error?.message
-      });
 
       if (error) {
         console.error('Harataku games fetch error:', error);
@@ -128,19 +131,14 @@ export async function GET(request: NextRequest) {
       // 選手名を別途取得
       if (data && data.length > 0) {
         const playerIds = [...new Set([
-          ...data.map((game: HaratakuGameResultRaw) => game.player_id),
-          ...data.map((game: HaratakuGameResultRaw) => game.opponent_id)
+          ...data.map((game) => game.player_id),
+          ...data.map((game) => game.opponent_id)
         ])];
 
         const { data: members, error: membersError } = await supabase
           .from('harataku_members')
           .select('id, name')
           .in('id', playerIds);
-
-        console.log('Members query result:', {
-          count: members?.length || 0,
-          error: membersError?.message
-        });
 
         if (membersError) {
           console.error('Members fetch error:', membersError);
@@ -151,25 +149,25 @@ export async function GET(request: NextRequest) {
           return NextResponse.json(errorResponse, { status: 500 });
         }
 
-        const memberMap = new Map(members?.map((m: HaratakuMemberSimple) => [m.id, m.name]) || []);
+        const memberMap = new Map(members?.map((m) => [m.id, m.name]) || []);
 
-        gamesData = data.map((game: HaratakuGameResultRaw): InternalGameData => ({
+        gamesData = data.map((game): InternalGameData => ({
           id: game.id,
           player: {
-            id: game.player_id,
+            id: game.player_id.toString(),
             name: memberMap.get(game.player_id) || '不明'
           },
           opponent: {
-            id: game.opponent_id,
+            id: game.opponent_id.toString(),
             name: memberMap.get(game.opponent_id) || '不明'
           },
           player_game_set: game.player_game_set,
           opponent_game_set: game.opponent_game_set,
-          harataku_match_result_id: game.harataku_match_result_id,
+          harataku_match_result_id: game.harataku_match_result_id || 0,
           created_at: game.created_at,
           updated_at: game.updated_at,
-          player_id: game.player_id,
-          opponent_id: game.opponent_id
+          player_id: game.player_id.toString(),
+          opponent_id: game.opponent_id.toString()
         }));
       } else {
         gamesData = [];
@@ -180,8 +178,6 @@ export async function GET(request: NextRequest) {
       };
       return NextResponse.json(errorResponse, { status: 400 });
     }
-
-    console.log('Returning games data:', { count: gamesData.length });
 
     // レスポンスデータをZodスキーマでバリデーション
     const responseData: GetGamesResponse = {

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           youtube_video_id: '', // 初期値は空文字（後でアップロード完了時に更新）
           metadata,
           status: 'pending',
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24時間後
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24時間後をISO文字列に変換
         })
         .select()
         .single();

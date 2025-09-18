@@ -60,13 +60,26 @@ export async function POST(request: NextRequest) {
     }
 
     // 試合との紐付け処理（metadata内にgameResultIdがある場合）
-    if (session.metadata.gameResultId) {
+    if (session.metadata &&
+        typeof session.metadata === 'object' &&
+        !Array.isArray(session.metadata) &&
+        'gameResultId' in session.metadata &&
+        session.metadata.gameResultId) {
       try {
+        const gameResultId = session.metadata.gameResultId;
+        const gameId = typeof gameResultId === 'number' ? gameResultId : parseInt(String(gameResultId));
+
+        // gameIdが有効な数値かチェック
+        if (isNaN(gameId)) {
+          console.warn('Invalid gameResultId in metadata:', gameResultId);
+          return;
+        }
+
         // 既存の試合結果テーブルを確認
         const { data: gameResult } = await supabase
           .from('match_games')
           .select('id')
-          .eq('id', session.metadata.gameResultId)
+          .eq('id', gameId)
           .single();
 
         if (gameResult) {
@@ -77,7 +90,7 @@ export async function POST(request: NextRequest) {
               youtube_video_id: youtubeVideoId,
               updated_at: new Date().toISOString()
             })
-            .eq('id', session.metadata.gameResultId);
+            .eq('id', gameId);
         }
       } catch (gameError) {
         console.error('Game result linking error:', gameError);

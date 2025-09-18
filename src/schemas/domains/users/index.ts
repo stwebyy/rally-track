@@ -23,7 +23,7 @@ export const UserBaseSchema = z.object({
 
 export const UserProfileSchema = UserBaseSchema.extend({
   bio: z.string().max(500, '自己紹介は500文字以内で入力してください').nullable(),
-  avatar_url: z.string().url('有効なアバターURLを入力してください').nullable(),
+  avatar_url: z.string().regex(/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)$/, '有効なアバターURLを入力してください').nullable(),
   preferences: z.object({
     theme: z.enum(['light', 'dark', 'auto']).default('light'),
     language: z.enum(['ja', 'en']).default('ja'),
@@ -33,7 +33,8 @@ export const UserProfileSchema = UserBaseSchema.extend({
       sms: z.boolean().default(false),
     }).default({ email: true, push: true, sms: false }),
   }).default({ theme: 'light', language: 'ja', notifications: { email: true, push: true, sms: false } }),
-}).merge(TimestampSchema);
+  ...TimestampSchema.shape,
+});
 
 // ===== Authentication Schemas =====
 
@@ -68,7 +69,7 @@ export const AuthResponseSchema = z.object({
 export const UpdateProfileRequestSchema = z.object({
   name: z.string().min(1, '名前は必須です').max(100, '名前は100文字以内で入力してください').optional(),
   bio: z.string().max(500, '自己紹介は500文字以内で入力してください').nullable().optional(),
-  avatar_url: z.string().url('有効なアバターURLを入力してください').nullable().optional(),
+  avatar_url: z.string().regex(/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)$/, '有効なアバターURLを入力してください').nullable().optional(),
   preferences: z.object({
     theme: z.enum(['light', 'dark', 'auto']).optional(),
     language: z.enum(['ja', 'en']).optional(),
@@ -98,7 +99,8 @@ export const HaratakuMemberSchema = z.object({
   id: IdSchema,
   name: z.string().min(1, 'メンバー名は必須です'),
   auth_id: IdSchema.nullable(),
-}).merge(TimestampSchema);
+  ...TimestampSchema.shape,
+});
 
 export const CreateMemberRequestSchema = z.object({
   name: z.string().min(1, 'メンバー名は必須です').max(100, 'メンバー名は100文字以内で入力してください'),

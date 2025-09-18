@@ -87,7 +87,7 @@ export default function MemberRecord() {
         const { data: memberData, error: memberError } = await supabase
           .from('harataku_members')
           .select('id, name')
-          .eq('id', memberId)
+          .eq('id', parseInt(memberId))
           .single();
 
         if (memberError) throw memberError;
@@ -130,7 +130,7 @@ export default function MemberRecord() {
               )
             )
           `)
-          .eq('player_name_id', memberId);
+          .eq('player_name_id', parseInt(memberId));
 
         if (externalGamesError) throw externalGamesError;
 

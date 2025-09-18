@@ -92,7 +92,7 @@ export default function EventDetail() {
         throw eventError;
       }
 
-      setEvent(eventData);
+      setEvent(eventData as EventWithMatchResults);
     } catch (error) {
       console.error('Error loading event data:', error);
       setError((error as Error).message);
@@ -120,7 +120,7 @@ export default function EventDetail() {
       const { error } = await supabase
         .from('events')
         .delete()
-        .eq('id', eventId);
+        .eq('id', parseInt(eventId));
 
       if (error) {
         throw error;

@@ -31,9 +31,11 @@ export const ExternalGameSchema = z.object({
   id: IdSchema,
   player_name: z.string().nullable(),
   opponent_player_name: z.string().nullable(),
-  youtube_url: z.string().url().nullable(),
+  youtube_url: z.string().regex(/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)$/).nullable(),
   match_result_id: IdSchema,
-}).merge(GameScoreSchema).merge(TimestampSchema);
+  ...GameScoreSchema.shape,
+  ...TimestampSchema.shape,
+});
 
 export const CreateExternalGameRequestSchema = z.object({
   match_result_id: IdSchema,
@@ -41,7 +43,7 @@ export const CreateExternalGameRequestSchema = z.object({
   opponent_player_name: z.string().min(1, '対戦相手名は必須です'),
   team_sets: z.number().int().min(0, 'セット数は0以上である必要があります'),
   opponent_sets: z.number().int().min(0, 'セット数は0以上である必要があります'),
-  youtube_url: z.string().url('有効なYouTube URLを入力してください').optional(),
+  youtube_url: z.string().regex(/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=]*)$/, '有効なYouTube URLを入力してください').optional(),
 });
 
 // ===== Internal Game Schemas =====
@@ -55,7 +57,8 @@ export const InternalGameSchema = z.object({
   harataku_match_result_id: IdSchema,
   player_id: IdSchema,
   opponent_id: IdSchema,
-}).merge(TimestampSchema);
+  ...TimestampSchema.shape,
+});
 
 export const CreateInternalGameRequestSchema = z.object({
   harataku_match_result_id: IdSchema,
@@ -70,7 +73,8 @@ export const CreateInternalGameRequestSchema = z.object({
 export const GetGamesRequestSchema = z.object({
   type: z.enum(['external', 'internal']),
   matchId: IdSchema,
-}).merge(PaginationRequestSchema.partial());
+  ...PaginationRequestSchema.partial().shape,
+});
 
 export const GameDataUnionSchema = z.union([ExternalGameSchema, InternalGameSchema]);
 
@@ -93,7 +97,8 @@ export const MatchResultSchema = z.object({
   opponent_sets: z.number().int().min(0),
   game_no: z.number().int().positive().optional(),
   notes: z.string().optional(),
-}).merge(TimestampSchema);
+  ...TimestampSchema.shape,
+});
 
 export const CreateMatchResultRequestSchema = z.object({
   event_id: IdSchema,

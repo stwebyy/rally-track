@@ -22,7 +22,7 @@ export async function POST(
     const { data: session, error: sessionError } = await supabase
       .from('upload_sessions')
       .select('*')
-      .eq('id', sessionId)
+      .eq('id', parseInt(sessionId))
       .eq('user_id', user.id)
       .single();
 
@@ -34,17 +34,17 @@ export async function POST(
     }
 
     // セッション期限確認
-    const isExpired = new Date() > new Date(session.expires_at);
+    const isExpired = session.expires_at ? new Date() > new Date(session.expires_at) : false;
     if (isExpired) {
       // 期限切れセッションの状態更新
       await supabase
         .from('upload_sessions')
         .update({
-          status: 'expired',
+          status: 'failed',
           error_message: 'Session expired - please start a new upload',
           updated_at: new Date().toISOString()
         })
-        .eq('id', sessionId)
+        .eq('id', parseInt(sessionId))
         .eq('user_id', user.id);
 
       return NextResponse.json(
@@ -96,7 +96,7 @@ export async function POST(
         status: 'uploading',
         updated_at: new Date().toISOString()
       })
-      .eq('id', sessionId)
+      .eq('id', parseInt(sessionId))
       .eq('user_id', user.id);
 
     if (updateError) {

@@ -8,6 +8,7 @@
 - Supabaseアカウント
 - YouTube Data API v3のAPIキー
 - vercel
+- yarn
 
 ### セットアップ
 

@@ -214,7 +214,15 @@ const VideoUploadPage = () => {
   };
 
   const handleVideoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = event.target.files;
+
+    // 複数ファイルが選択された場合のチェック
+    if (files && files.length > 1) {
+      setVideoError('一度に選択できる動画ファイルは1つだけです');
+      return;
+    }
+
+    const file = files?.[0];
     if (file) {
       // ファイルサイズチェック（5GB）
       const maxSize = 5 * 1024 * 1024 * 1024;
@@ -520,6 +528,7 @@ const VideoUploadPage = () => {
                   <input
                     type="file"
                     accept="video/*"
+                    multiple={false}
                     onChange={handleVideoSelect}
                     disabled={!!currentUpload.uploader}
                     style={{ display: 'none' }}
